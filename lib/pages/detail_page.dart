@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/booking_options.dart';
-import '../models/cart_item.dart';
+import '../models/booking_draft.dart';
 import '../models/padel_court.dart';
 import '../utils/formatters.dart';
 import '../widgets/facility_chip.dart';
@@ -10,10 +10,7 @@ import '../widgets/reviews_section.dart';
 
 class DetailPage extends StatefulWidget {
   final PadelCourt court;
-  // Diisi kalau halaman ini dibuka lewat tombol "Edit" di Keranjang.
-  // Pilihan durasi, add-on, dan catatan akan terisi dari reservasi tsb.
-  final CartItem? editItem;
-  const DetailPage({super.key, required this.court, this.editItem});
+  const DetailPage({super.key, required this.court});
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -28,26 +25,12 @@ class _DetailPageState extends State<DetailPage> {
 
   final TextEditingController _noteController = TextEditingController();
 
-  // Jumlah add-on dari reservasi yang sedang diedit (supaya jumlahnya
-  // tidak kembali ke 1 saat pengguna hanya ingin menambah add-on lain).
+  // Jumlah tiap add-on yang dipilih (default 1, diatur lewat tombol + / -).
   final Map<String, int> _addonQuantities = {};
 
   @override
   void initState() {
     super.initState();
-    final item = widget.editItem;
-    if (item != null) {
-      final durationIndex =
-      durationOptions.indexWhere((d) => d.label == item.duration);
-      if (durationIndex != -1) {
-        _selectedDurationIndex = durationIndex;
-      }
-      for (final addon in item.addons) {
-        _selectedAddons.add(addon.name);
-        _addonQuantities[addon.name] = addon.quantity;
-      }
-      _noteController.text = item.note;
-    }
     // Kelas selalu 2 jam, jadi durasinya tidak dipilih pengguna.
     if (widget.court.category == 'Kelas') {
       final twoHours = durationOptions.indexWhere((d) => d.label == '2 Jam');
@@ -121,7 +104,7 @@ class _DetailPageState extends State<DetailPage> {
           durationHours: durationOptions[_selectedDurationIndex].hours,
           addons: _addons
               .where((addon) => _selectedAddons.contains(addon.name))
-              .map((addon) => CartAddon(
+              .map((addon) => DraftAddon(
             name: addon.name,
             price: addon.price,
             quantity: _addonQuantities[addon.name] ?? 1,
@@ -129,7 +112,6 @@ class _DetailPageState extends State<DetailPage> {
               .toList(),
           note: _noteController.text.trim(),
           courtPrice: _courtPrice,
-          editItem: widget.editItem,
         ),
       ),
     );
@@ -143,7 +125,7 @@ class _DetailPageState extends State<DetailPage> {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         backgroundColor: Colors.pink.shade300,
-        title: Text(widget.editItem == null ? court.name : 'Edit: ${court.name}',
+        title: Text(court.name,
             style: const TextStyle(color: Colors.white, fontSize: 16)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -375,41 +357,143 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   // Pilihan add-on: multi-select, pakai Wrap supaya tidak overflow
-  // kalau layar sempit atau nama add-on panjang.
+  // kalau layar sempit atau nama add-on panjang. Add-on yang dipilih
+  // muncul di bawahnya dengan tombol + / - untuk mengatur jumlah.
   Widget _buildAddonPicker() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _addons.map((addon) {
-        final isSelected = _selectedAddons.contains(addon.name);
-        return SelectableOption(
-          selected: isSelected,
-          onTap: () {
-            setState(() {
-              if (isSelected) {
-                _selectedAddons.remove(addon.name);
-              } else {
-                _selectedAddons.add(addon.name);
-              }
-            });
-          },
-          child: Row(
+    final selected =
+    _addons.where((a) => _selectedAddons.contains(a.name)).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: _addons.map((addon) {
+            final isSelected = _selectedAddons.contains(addon.name);
+            return SelectableOption(
+              selected: isSelected,
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedAddons.remove(addon.name);
+                    _addonQuantities.remove(addon.name);
+                  } else {
+                    _selectedAddons.add(addon.name);
+                    _addonQuantities[addon.name] = 1;
+                  }
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isSelected ? Icons.check_circle : Icons.add_circle_outline,
+                    size: 16,
+                    color: isSelected ? Colors.pink.shade300 : Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${addon.name} (+${formatRupiah(addon.price)})',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        if (selected.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                for (final addon in selected) ...[
+                  _buildAddonQuantityRow(addon),
+                  if (addon != selected.last) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAddonQuantityRow(AddonOption addon) {
+    final qty = _addonQuantities[addon.name] ?? 1;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSelected ? Icons.check_circle : Icons.add_circle_outline,
-                size: 16,
-                color: isSelected ? Colors.pink.shade300 : Colors.grey,
-              ),
-              const SizedBox(width: 6),
+              Text(addon.name,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600)),
               Text(
-                '${addon.name} (+${formatRupiah(addon.price)})',
-                style: const TextStyle(fontSize: 12),
+                '${formatRupiah(addon.price)} x $qty = '
+                    '${formatRupiah(addon.price * qty)}',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
             ],
           ),
-        );
-      }).toList(),
+        ),
+        _stepperButton(
+          icon: qty == 1 ? Icons.delete_outline : Icons.remove,
+          background: Colors.white,
+          iconColor: qty == 1 ? Colors.redAccent : Colors.black87,
+          onTap: () => setState(() {
+            if (qty > 1) {
+              _addonQuantities[addon.name] = qty - 1;
+            } else {
+              _selectedAddons.remove(addon.name);
+              _addonQuantities.remove(addon.name);
+            }
+          }),
+        ),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$qty',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+        ),
+        _stepperButton(
+          icon: Icons.add,
+          background: Colors.pink.shade300,
+          iconColor: Colors.white,
+          onTap: () => setState(() => _addonQuantities[addon.name] = qty + 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepperButton({
+    required IconData icon,
+    required Color background,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Icon(icon, size: 15, color: iconColor),
+      ),
     );
   }
 

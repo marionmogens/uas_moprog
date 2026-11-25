@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/supabase_config.dart';
 import '../models/booking.dart';
-import '../models/cart_item.dart';
+import '../models/booking_draft.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
 import 'auth_service.dart';
@@ -59,15 +59,15 @@ class BookingService {
         .toSet();
   }
 
-  Future<void> createBookings({
-    required List<CartItem> items,
+  Future<void> createBooking({
+    required BookingDraft draft,
     required String bookingCode,
     required String customerName,
     required String customerPhone,
     required String paymentMethod,
   }) async {
     final headers = {...await _headers(), 'Prefer': 'return=minimal'};
-    final rows = items
+    final rows = [draft]
         .map((item) => {
       'booking_code': bookingCode,
       'court_id': item.court.id,

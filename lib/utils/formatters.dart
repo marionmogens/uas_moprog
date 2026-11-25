@@ -25,7 +25,7 @@ const List<String> _monthNames = [
 
 // Mengubah DateTime menjadi teks tanggal berbahasa Indonesia,
 // misal "Senin, 12 Oktober 2026". Dipakai di halaman Pilih Jadwal,
-// Keranjang, dan Ringkasan supaya formatnya konsisten di semua tempat.
+// dan Ringkasan supaya formatnya konsisten di semua tempat.
 String formatDate(DateTime date) {
   final dayName = _dayNames[date.weekday - 1];
   final monthName = _monthNames[date.month - 1];

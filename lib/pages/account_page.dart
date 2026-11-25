@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../data/cart_store.dart';
 import '../models/app_user.dart';
 import '../services/api_exception.dart';
 import '../services/auth_service.dart';
@@ -84,7 +83,6 @@ class _AccountPageState extends State<AccountPage> {
     if (confirm != true) return;
 
     await AuthService.instance.signOut();
-    CartStore.clear(); // keranjang milik akun sebelumnya tidak ikut terbawa
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,

@@ -43,7 +43,7 @@ class ApiClient {
     final m = message.toLowerCase();
     if (m.contains('slot_taken')) {
       return 'Jam yang kamu pilih baru saja dipesan orang lain. '
-          'Kembali ke keranjang untuk mengganti jadwal.';
+          'Kembali dan pilih jadwal lain.';
     }
     if (m.contains('not_admin')) {
       return 'Hanya admin yang bisa melakukan tindakan ini.';

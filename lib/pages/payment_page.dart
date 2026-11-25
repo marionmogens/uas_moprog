@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/booking_options.dart';
-import '../data/cart_store.dart';
+import '../models/booking_draft.dart';
 import '../services/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/booking_service.dart';
@@ -10,7 +10,8 @@ import '../widgets/selectable_option.dart';
 import 'confirmation_page.dart';
 
 class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
+  final BookingDraft draft;
+  const PaymentPage({super.key, required this.draft});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -32,7 +33,7 @@ class _PaymentPageState extends State<PaymentPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text('Konfirmasi Pembayaran'),
         content: Text(
-          'Bayar ${formatRupiah(CartStore.totalPrice)} menggunakan '
+          'Bayar ${formatRupiah(widget.draft.totalPrice)} menggunakan '
               '${method.name}?',
         ),
         actions: [
@@ -52,20 +53,18 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // Simpan reservasi ke Supabase. Keranjang BARU dikosongkan setelah server
-  // menyatakan berhasil; kalau gagal (mis. jam sudah dipesan orang lain),
-  // keranjang tetap utuh supaya user bisa kembali dan mengganti jadwal.
+  // Simpan reservasi ke Supabase. Kalau gagal (mis. jam sudah dipesan orang
+  // lain), user tetap di halaman ini dan bisa kembali untuk mengganti jadwal.
   Future<void> _processPayment(PaymentMethodOption method) async {
     setState(() => _paying = true);
 
-    final total = CartStore.totalPrice;
-    final paidItems = [...CartStore.items];
+    final draft = widget.draft;
     final bookingCode =
         'PDL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
     try {
-      await BookingService.instance.createBookings(
-        items: paidItems,
+      await BookingService.instance.createBooking(
+        draft: draft,
         bookingCode: bookingCode,
         customerName: _name,
         customerPhone: _phone,
@@ -79,16 +78,14 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     if (!mounted) return;
-    CartStore.clear(); // pembayaran sukses -> keranjang dikosongkan
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
         builder: (context) => ConfirmationPage(
           customerName: _name,
-          totalPaid: total,
           methodName: method.name,
           bookingCode: bookingCode,
-          items: paidItems,
+          draft: draft,
         ),
       ),
           (route) => route.isFirst, // bersihkan stack sampai Home saja
@@ -125,7 +122,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     const Text('Total Pembayaran',
                         style: TextStyle(color: Colors.white70, fontSize: 12)),
                     Text(
-                      formatRupiah(CartStore.totalPrice),
+                      formatRupiah(widget.draft.totalPrice),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

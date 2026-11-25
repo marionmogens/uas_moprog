@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../data/cart_store.dart';
 import '../models/padel_court.dart';
 import '../services/api_exception.dart';
 import '../services/auth_service.dart';
@@ -10,7 +9,6 @@ import '../widgets/custom_bottom_nav.dart';
 import 'account_page.dart';
 import 'detail_page.dart';
 import 'history_page.dart';
-import 'cart_page.dart';
 import '../models/venue_filter.dart';
 import '../services/location_service.dart';
 import '../utils/formatters.dart';
@@ -48,19 +46,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Setiap isi keranjang berubah (di halaman mana pun), Home ikut
-    // di-refresh supaya angka badge keranjang selalu sesuai.
-    CartStore.onChanged = () {
-      if (mounted) {
-        setState(() {});
-      }
-    };
     _loadCourts();
   }
 
   @override
   void dispose() {
-    CartStore.onChanged = null;
     _searchController.dispose();
     super.dispose();
   }
@@ -280,16 +270,6 @@ class _HomePageState extends State<HomePage> {
     await FavoriteStore.save(_userId, _favoriteIds);
   }
 
-  Future<void> _openCart() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CartPage()),
-    );
-    // Refresh badge setelah kembali dari Keranjang, karena isi
-    // CartStore mungkin berubah (item dihapus atau jumlahnya diubah)
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -308,7 +288,6 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (_) => const HelpPage()),
             ),
           ),
-          _buildCartButton(),
         ],
       ),
       body: SafeArea(
@@ -524,45 +503,7 @@ class _HomePageState extends State<HomePage> {
 // Ikon keranjang di AppBar + badge jumlah item. Stack + Positioned
 // dipakai supaya badge bisa "menempel" di pojok kanan atas ikon.
 // Badge hanya muncul kalau keranjang tidak kosong.
-  Widget _buildCartButton() {
-    final count = CartStore.totalItemCount;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: InkWell(
-        onTap: _openCart,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-              if (count > 0)
-                Positioned(
-                  right: -8,
-                  top: -8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.redAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$count',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   // Logo + tulisan "PadelBook" di kiri atas. Diketuk = muat ulang daftar
   // tempat (menggantikan tombol refresh yang dulu ada di kanan atas).

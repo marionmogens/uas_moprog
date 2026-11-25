@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import '../data/booking_options.dart';
-import '../data/cart_store.dart';
-import '../models/cart_item.dart';
+import '../models/booking_draft.dart';
 import '../models/padel_court.dart';
 import '../services/api_exception.dart';
 import '../services/booking_service.dart';
 import '../utils/formatters.dart';
 import '../widgets/selectable_option.dart';
-import 'cart_page.dart';
+import 'summary_page.dart';
 
 class SchedulePage extends StatefulWidget {
   final PadelCourt court;
   final String duration;
   final int durationHours; // jumlah slot 1 jam yang WAJIB dipilih
-  final List<CartAddon> addons; // add-on terpilih (jumlah awal 1)
+  final List<DraftAddon> addons; // add-on terpilih beserta jumlahnya
   final String note;
   final int courtPrice; // harga sewa lapangan untuk durasi ini
-  // Diisi kalau sedang mengedit reservasi di Keranjang (bukan menambah baru).
-  final CartItem? editItem;
 
   const SchedulePage({
     super.key,
@@ -27,7 +24,6 @@ class SchedulePage extends StatefulWidget {
     required this.addons,
     required this.note,
     required this.courtPrice,
-    this.editItem,
   });
 
   @override
@@ -95,7 +91,7 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   // Kelas: memilih satu sesi berarti memilih 2 slot berurutan
-  // (slot awal dan slot sesudahnya), supaya alur keranjang tetap sama.
+  // (slot awal dan slot sesudahnya).
   void _selectClassSession(int startSlot) {
     setState(() {
       _selectedSlotIndexes.clear();
@@ -108,20 +104,6 @@ class _SchedulePageState extends State<SchedulePage> {
   void initState() {
     super.initState();
     _selectedField = widget.court.fieldNames.first;
-    final item = widget.editItem;
-    if (item != null) {
-      // Mode edit: isi awal dari reservasi lama.
-      if (widget.court.fieldNames.contains(item.fieldName)) {
-        _selectedField = item.fieldName;
-      }
-      _selectedDate = item.date;
-      // Slot lama hanya dipakai kalau jumlahnya masih cocok dengan durasi
-      // baru (kalau durasi diganti, pengguna memilih jam lagi).
-      if (item.slotIndexes.length == widget.durationHours) {
-        _selectedSlotIndexes.addAll(item.slotIndexes);
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadTakenSlots());
-    }
   }
 
   Future<void> _pickDate() async {
@@ -143,10 +125,11 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
-  void _addToCart() {
+  // Buat pesanan dari pilihan user lalu lanjut ke Ringkasan (tanpa keranjang).
+  void _continueToSummary() {
     final sorted = _selectedSlotIndexes.toList();
     sorted.sort();
-    final cartItem = CartItem(
+    final draft = BookingDraft(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       court: widget.court,
       fieldName: _isClass ? widget.court.location : _selectedField,
@@ -154,31 +137,13 @@ class _SchedulePageState extends State<SchedulePage> {
       timeSlot: _formatSlots(sorted),
       slotIndexes: sorted,
       duration: widget.duration,
-      // salinan baru, supaya jumlah add-on tiap reservasi berdiri sendiri
       addons: widget.addons.map((a) => a.copy()).toList(),
       note: widget.note,
       courtPrice: widget.courtPrice,
     );
-    final editItem = widget.editItem;
-    if (editItem == null) {
-      CartStore.add(cartItem);
-    } else {
-      // Mode edit: ganti reservasi lama dengan yang baru (posisi tetap).
-      final index = CartStore.items.indexOf(editItem);
-      if (index == -1) {
-        CartStore.add(cartItem);
-      } else {
-        CartStore.items[index] = cartItem;
-      }
-    }
-
-    // Ganti semua halaman di atas Home dengan Keranjang, supaya tombol
-    // back dari Keranjang kembali ke Home (bukan ke Jadwal) dan Keranjang
-    // selalu tampil dengan data terbaru.
-    Navigator.pushAndRemoveUntil(
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CartPage()),
-          (route) => route.isFirst,
+      MaterialPageRoute(builder: (context) => SummaryPage(draft: draft)),
     );
   }
 
@@ -186,27 +151,6 @@ class _SchedulePageState extends State<SchedulePage> {
   int get _sessionPrice =>
       widget.courtPrice +
           widget.addons.fold(0, (sum, a) => sum + a.subtotal);
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  // Slot yang SUDAH ada di keranjang untuk venue + lapangan + tanggal
-  // yang sedang dipilih. Slot ini tidak boleh dipesan lagi.
-  Set<int> get _slotsInCart {
-    final result = <int>{};
-    if (_selectedDate == null) return result;
-    for (final item in CartStore.items) {
-      // slot milik reservasi yang sedang diedit tidak ikut dikunci
-      if (item == widget.editItem) continue;
-      final sameCourt = item.court.id == widget.court.id;
-      final sameField = _isClass || item.fieldName == _selectedField;
-      if (sameCourt && sameField && _isSameDay(item.date, _selectedDate!)) {
-        result.addAll(item.slotIndexes);
-      }
-    }
-    return result;
-  }
 
   // Pilih / lepas slot jam. Slot yang dipilih HARUS berurutan.
   // - Ketuk slot yang sudah dipilih: slot itu dilepas.
@@ -268,7 +212,7 @@ class _SchedulePageState extends State<SchedulePage> {
       return 'Pilih ${widget.durationHours} jam berurutan '
           '(${_selectedSlotIndexes.length}/${widget.durationHours})';
     }
-    return widget.editItem == null ? 'Lanjut ke Keranjang' : 'Simpan Perubahan';
+    return 'Lanjut ke Ringkasan';
   }
 
   String _nextHour(String hour) {
@@ -338,7 +282,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     if (value == null) return;
                     setState(() {
                       _selectedField = value;
-                      // slot yang sudah di keranjang beda tiap lapangan,
+                      // slot terpakai beda tiap lapangan,
                       // jadi pilihan lama dikosongkan.
                       _selectedSlotIndexes.clear();
                     });
@@ -443,7 +387,7 @@ class _SchedulePageState extends State<SchedulePage> {
             child: ElevatedButton(
               // "if" di sini yang nentuin tombol aktif/nonaktif:
               // kalau canContinue false, onPressed diisi null (disabled).
-              onPressed: canContinue ? _addToCart : null,
+              onPressed: canContinue ? _continueToSummary : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink.shade300,
                 foregroundColor: Colors.white,
@@ -516,22 +460,18 @@ class _SchedulePageState extends State<SchedulePage> {
         _legendDot(Colors.white, 'Tersedia', bordered: true),
         _legendDot(Colors.pink.shade300, 'Dipilih'),
         _legendDot(Colors.grey.shade300, 'Penuh'),
-        _legendDot(Colors.pink.shade100, 'Di keranjang'),
       ],
     );
   }
-  // Daftar sesi kelas: tiap sesi satu kartu pilihan (SelectableOption).
-// Sesi terpilih kalau kedua slot jamnya ada di _selectedSlotIndexes.
-  Widget _buildClassSessions() {
-    final slotsInCart = _slotsInCart;
 
+  // Daftar sesi kelas: tiap sesi satu kartu pilihan (SelectableOption).
+  // Sesi terpilih kalau kedua slot jamnya ada di _selectedSlotIndexes.
+  Widget _buildClassSessions() {
     return Column(
       children: widget.court.classStartSlots.map((start) {
         final isSelected = _selectedSlotIndexes.contains(start) &&
             _selectedSlotIndexes.contains(start + 1);
         final label = '${timeSlots[start]} - ${_nextHour(timeSlots[start + 1])}';
-        final inCart =
-            slotsInCart.contains(start) || slotsInCart.contains(start + 1);
         final isTaken =
             _takenSlots.contains(start) || _takenSlots.contains(start + 1);
         return Padding(
@@ -540,7 +480,7 @@ class _SchedulePageState extends State<SchedulePage> {
             width: double.infinity,
             child: SelectableOption(
               selected: isSelected,
-              onTap: (inCart || isTaken)
+              onTap: isTaken
                   ? () {}
                   : () => _selectClassSession(start),
               child: Row(
@@ -553,17 +493,11 @@ class _SchedulePageState extends State<SchedulePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      isTaken
-                          ? '$label • Penuh'
-                          : inCart
-                          ? '$label • Di keranjang'
-                          : '$label (2 jam)',
+                      isTaken ? '$label • Penuh' : '$label (2 jam)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: (inCart || isTaken)
-                            ? Colors.grey
-                            : Colors.black87,
+                        color: isTaken ? Colors.grey : Colors.black87,
                       ),
                     ),
                   ),
@@ -600,9 +534,8 @@ class _SchedulePageState extends State<SchedulePage> {
 
   // Grid slot jam: disusun manual pakai Wrap + "for" (lewat List.generate)
   // supaya tiap slot bisa dikasih warna berbeda sesuai 3 status:
-  // tersedia (putih+border), dipilih (teal), penuh (abu+label "Penuh").
+  // tersedia (putih+border), dipilih (pink), penuh (abu+label "Penuh").
   Widget _buildTimeSlotGrid() {
-    final slotsInCart = _slotsInCart;
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -611,7 +544,6 @@ class _SchedulePageState extends State<SchedulePage> {
           widget.court.closeSlotIndex - widget.court.openSlotIndex, (i) {
         final index = widget.court.openSlotIndex + i;
         final isBooked = _takenSlots.contains(index);
-        final isInCart = slotsInCart.contains(index);
         final isSelected = _selectedSlotIndexes.contains(index);
 
         Color backgroundColor;
@@ -621,10 +553,6 @@ class _SchedulePageState extends State<SchedulePage> {
           backgroundColor = Colors.grey.shade200;
           textColor = Colors.grey.shade500;
           borderColor = Colors.grey.shade200;
-        } else if (isInCart) {
-          backgroundColor = Colors.pink.shade50;
-          textColor = Colors.pink.shade200;
-          borderColor = Colors.pink.shade100;
         } else if (isSelected) {
           backgroundColor = Colors.pink.shade300;
           textColor = Colors.white;
@@ -636,8 +564,8 @@ class _SchedulePageState extends State<SchedulePage> {
         }
 
         return InkWell(
-          onTap: (isBooked || isInCart)
-              ? null // slot penuh / sudah di keranjang tidak bisa ditekan
+          onTap: isBooked
+              ? null // slot penuh tidak bisa ditekan
               : () => _toggleSlot(index),
           borderRadius: BorderRadius.circular(8),
           child: Container(
@@ -672,18 +600,6 @@ class _SchedulePageState extends State<SchedulePage> {
                       style: TextStyle(
                         fontSize: 9,
                         color: Colors.red.shade400,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                if (isInCart)
-                  Positioned(
-                    top: -16,
-                    child: Text(
-                      'Di keranjang',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: Colors.pink.shade300,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

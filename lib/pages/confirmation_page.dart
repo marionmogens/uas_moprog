@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
-import '../models/cart_item.dart';
+import '../models/booking_draft.dart';
 import '../utils/formatters.dart';
 
 class ConfirmationPage extends StatelessWidget {
   final String customerName;
-  final int totalPaid;
   final String methodName;
   final String bookingCode; // dibuat di PaymentPage, jadi tidak berubah-ubah
-  final List<CartItem> items; // salinan isi keranjang saat pembayaran
+  final BookingDraft draft; // pesanan yang baru dibayar
 
   const ConfirmationPage({
     super.key,
     required this.customerName,
-    required this.totalPaid,
     required this.methodName,
     required this.bookingCode,
-    required this.items,
+    required this.draft,
   });
 
   @override
@@ -87,38 +85,35 @@ class ConfirmationPage extends StatelessWidget {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 10),
-                      for (final item in items) ...[
+                      Text(
+                        draft.court.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 12),
+                      ),
+                      Text(
+                        '${draft.fieldName} • ${formatDate(draft.date)}',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      Text(
+                        '${draft.timeSlot} • ${draft.duration}',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      if (draft.addons.isNotEmpty)
                         Text(
-                          item.court.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 12),
-                        ),
-                        Text(
-                          '${item.fieldName} • ${formatDate(item.date)}',
+                          'Add-on: ${draft.addonsText}',
                           style: TextStyle(
                               fontSize: 11, color: Colors.grey.shade600),
                         ),
+                      if (draft.note.isNotEmpty)
                         Text(
-                          '${item.timeSlot} • ${item.duration}',
+                          'Catatan: ${draft.note}',
                           style: TextStyle(
                               fontSize: 11, color: Colors.grey.shade600),
                         ),
-                        if (item.addons.isNotEmpty)
-                          Text(
-                            'Add-on: ${item.addonsText}',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade600),
-                          ),
-                        if (item.note.isNotEmpty)
-                          Text(
-                            'Catatan: ${item.note}',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade600),
-                          ),
-                        if (item != items.last) const Divider(height: 18),
-                      ],
                       const Divider(height: 24),
-                      _detailRow('Total Dibayar', formatRupiah(totalPaid)),
+                      _detailRow('Total Dibayar', formatRupiah(draft.totalPrice)),
                       const SizedBox(height: 6),
                       _detailRow('Metode Pembayaran', methodName),
                       const SizedBox(height: 6),
@@ -131,6 +126,8 @@ class ConfirmationPage extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      // Kembali ke Home, bersihkan seluruh stack navigasi
+                      // supaya tombol back tidak balik lagi ke halaman bayar.
                       Navigator.popUntil(context, (route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
