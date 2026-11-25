@@ -45,6 +45,10 @@ class ApiClient {
       return 'Jam yang kamu pilih baru saja dipesan orang lain. '
           'Kembali dan pilih jadwal lain.';
     }
+    if (m.contains('venue_closed')) {
+      return 'Tempat ini sedang tidak menerima pesanan. '
+          'Coba lagi nanti atau pilih tempat lain.';
+    }
     if (m.contains('not_admin')) {
       return 'Hanya admin yang bisa melakukan tindakan ini.';
     }

@@ -308,7 +308,11 @@ class _HomePageState extends State<HomePage> {
         top: false,
         child: CustomBottomNav(
           currentIndex: _navIndex,
-          onTap: (index) => setState(() => _navIndex = index),
+          onTap: (index) {
+            // Kembali ke Beranda: muat ulang agar status Tersedia/Penuh terbaru.
+            if (index == 0 && _navIndex != 0) _loadCourts();
+            setState(() => _navIndex = index);
+          },
         ),
       ),
     );

@@ -122,9 +122,9 @@ class _AccountPageState extends State<AccountPage> {
           if (!widget.isAdminView) ...[
             _menuTile(
               icon: Icons.storefront_outlined,
-              title: user.isOwner ? 'Tempat Saya' : 'Daftarkan Lapanganmu',
+              title: user.isOwner ? 'Kelola Lapangan' : 'Daftarkan Lapanganmu',
               subtitle: user.isOwner
-                  ? 'Kelola lapangan & kelas yang kamu miliki'
+                  ? 'Atur pesanan, lihat ulasan & rating lapangan/kelasmu'
                   : 'Punya lapangan padel? Ajukan agar bisa disewa',
               onTap: () async {
                 await Navigator.push(context,

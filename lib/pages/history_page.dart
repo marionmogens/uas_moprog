@@ -211,6 +211,9 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 2),
+                    Icon(Icons.chevron_right,
+                        size: 20, color: Colors.grey.shade500),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -228,28 +231,27 @@ class _HistoryPageState extends State<HistoryPage> {
                 if (booking.note.isNotEmpty)
                   _infoRow(Icons.sticky_note_2_outlined, booking.note),
                 const Divider(height: 22),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Total • ${booking.paymentMethod}',
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Total • ${booking.paymentMethod}',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          Text(
+                            formatRupiah(booking.totalPrice),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade600)),
-                        Text(
-                          formatRupiah(booking.totalPrice),
-                          style: TextStyle(
-                            color: Colors.pink.shade300,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                              color: Colors.pink.shade300,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     if (booking.canReview)
                       OutlinedButton.icon(
@@ -265,19 +267,6 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                         ),
                       ),
-                    TextButton(
-                      onPressed: () => _openDetail(booking),
-                      style: TextButton.styleFrom(
-                          foregroundColor: Colors.pink.shade300),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Lihat Detail',
-                              style: TextStyle(fontSize: 12)),
-                          Icon(Icons.chevron_right, size: 18),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ],
