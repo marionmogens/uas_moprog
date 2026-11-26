@@ -21,7 +21,7 @@ class ReviewService {
       .toList();
 
   Future<List<Review>> fetchForVenue(String venueId, {int limit = 20}) async {
-    final headers = await _headers();
+    final headers = await _auth.readHeaders();
     final res = await ApiClient.send(() => http.get(
       Uri.parse(
           '${SupabaseConfig.restUrl}/reviews?venue_id=eq.$venueId&select=*&order=created_at.desc&limit=$limit'),

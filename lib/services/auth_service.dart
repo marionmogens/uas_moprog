@@ -19,8 +19,17 @@ class AuthService {
   AuthSession? _session;
   AppUser? _currentUser;
 
+  // Mode tamu: masuk ke aplikasi tanpa akun, hanya untuk MELIHAT lapangan/kelas.
+  // Tidak disimpan di HP, jadi saat aplikasi dibuka lagi kembali ke halaman Login.
+  bool _guest = false;
+
   AppUser? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
+  bool get isGuest => _guest && _currentUser == null;
+
+  void enterGuest() {
+    _guest = true;
+  }
 
   // ---------------------------------------------------------------
   // Header HTTP
@@ -38,6 +47,13 @@ class AuthService {
     ..._baseHeaders,
     'Authorization': 'Bearer $accessToken',
   };
+
+  // Header untuk permintaan BACA data publik (daftar tempat, ulasan).
+  // Sudah login -> pakai token user. Tamu -> hanya apikey (peran `anon`).
+  Future<Map<String, String>> readHeaders() async {
+    if (_session == null) return _baseHeaders;
+    return authHeaders(await getValidToken());
+  }
 
   // ---------------------------------------------------------------
   // DAFTAR. Mengembalikan true kalau langsung login (konfirmasi email
@@ -84,6 +100,57 @@ class AuthService {
     }
     await _startSession(
         AuthSession.fromAuthResponse(jsonDecode(res.body) as Map<String, dynamic>));
+  }
+
+  // ---------------------------------------------------------------
+  // LUPA KATA SANDI (hanya lewat email), tanpa membuka browser:
+  //  1) requestPasswordReset -> Supabase mengirim email berisi KODE (OTP).
+  //  2) resetPasswordWithCode -> kode diverifikasi, lalu kata sandi diganti.
+  // Supaya email berisi kode, template "Reset Password" di Supabase harus
+  // memuat {{ .Token }}.
+  // ---------------------------------------------------------------
+  Future<void> requestPasswordReset(String email) async {
+    final res = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.authUrl}/recover'),
+      headers: _baseHeaders,
+      body: jsonEncode({'email': email}),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+  }
+
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final verify = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.authUrl}/verify'),
+      headers: _baseHeaders,
+      body: jsonEncode({'type': 'recovery', 'email': email, 'token': code}),
+    ));
+    if (verify.statusCode != 200) throw ApiClient.errorFrom(verify);
+
+    final token =
+    (jsonDecode(verify.body) as Map<String, dynamic>)['access_token']
+    as String?;
+    if (token == null) {
+      throw const ApiException('Kode tidak valid atau sudah kedaluwarsa.');
+    }
+
+    final res = await ApiClient.send(() => http.put(
+      Uri.parse('${SupabaseConfig.authUrl}/user'),
+      headers: authHeaders(token),
+      body: jsonEncode({'password': newPassword}),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+
+    // Sesi sementara dari kode ini tidak dipakai untuk login: dicabut.
+    try {
+      await http
+          .post(Uri.parse('${SupabaseConfig.authUrl}/logout'),
+          headers: authHeaders(token))
+          .timeout(ApiClient.timeout);
+    } catch (_) {}
   }
 
   // ---------------------------------------------------------------
@@ -180,6 +247,7 @@ class AuthService {
   // Internal
   // ---------------------------------------------------------------
   Future<void> _startSession(AuthSession session) async {
+    _guest = false;
     _session = session;
     await _storage.saveSession(session);
     _currentUser = await _fetchProfile();
@@ -219,6 +287,7 @@ class AuthService {
   }
 
   Future<void> _clearLocal() async {
+    _guest = false;
     _session = null;
     _currentUser = null;
     await _storage.clear();

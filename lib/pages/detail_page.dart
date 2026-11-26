@@ -7,6 +7,7 @@ import '../widgets/facility_chip.dart';
 import '../widgets/selectable_option.dart';
 import 'schedule_page.dart';
 import '../widgets/reviews_section.dart';
+import '../utils/guest_gate.dart';
 
 class DetailPage extends StatefulWidget {
   final PadelCourt court;
@@ -45,6 +46,11 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void _toggleFavorite() {
+    // Tamu tidak bisa menyimpan favorit -> diarahkan ke Login / Daftar.
+    if (!requireLogin(context,
+        message: 'Masuk atau daftar dulu untuk menyimpan favorit.')) {
+      return;
+    }
     setState(() {
       widget.court.isFavorite = !widget.court.isFavorite;
     });
@@ -95,6 +101,11 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void _goToSchedule() {
+    // Tamu tidak bisa memesan -> diarahkan ke Login / Daftar.
+    if (!requireLogin(context,
+        message: 'Masuk atau daftar dulu untuk memesan lapangan atau kelas.')) {
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(

@@ -12,8 +12,10 @@ import 'history_page.dart';
 import '../models/venue_filter.dart';
 import '../services/location_service.dart';
 import '../utils/formatters.dart';
+import '../utils/guest_gate.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/guest_account_view.dart';
 import 'help_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -61,7 +63,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadCourts() async {
     try {
       final courts = await VenueService.instance.fetchApproved();
-      final favorites = await FavoriteStore.load(_userId);
+      final favorites = AuthService.instance.isGuest
+          ? <String>{}
+          : await FavoriteStore.load(_userId);
       for (final court in courts) {
         court.isFavorite = favorites.contains(court.id);
       }
@@ -105,6 +109,11 @@ class _HomePageState extends State<HomePage> {
 
   // Tandai / batalkan favorit, simpan ke HP, lalu tampilkan toast.
   Future<void> _toggleFavorite(PadelCourt court) async {
+    // Tamu tidak bisa menyimpan favorit -> diarahkan ke Login / Daftar.
+    if (!requireLogin(context,
+        message: 'Masuk atau daftar dulu untuk menyimpan favorit.')) {
+      return;
+    }
     final nowFavorite = !court.isFavorite;
     setState(() {
       court.isFavorite = nowFavorite;
@@ -267,7 +276,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _favoriteIds = _courts.where((c) => c.isFavorite).map((c) => c.id).toSet();
     });
-    await FavoriteStore.save(_userId, _favoriteIds);
+    // Tamu tidak punya favorit, jadi tidak ada yang perlu disimpan.
+    if (!AuthService.instance.isGuest) {
+      await FavoriteStore.save(_userId, _favoriteIds);
+    }
   }
 
   @override
@@ -309,6 +321,19 @@ class _HomePageState extends State<HomePage> {
         child: CustomBottomNav(
           currentIndex: _navIndex,
           onTap: (index) {
+            // Tamu: tab Favorit & Riwayat langsung diarahkan ke Login / Daftar.
+            if (AuthService.instance.isGuest) {
+              if (index == 1) {
+                requireLogin(context,
+                    message: 'Masuk dulu untuk melihat daftar favoritmu.');
+                return;
+              }
+              if (index == 2) {
+                requireLogin(context,
+                    message: 'Masuk dulu untuk melihat riwayat pesananmu.');
+                return;
+              }
+            }
             // Kembali ke Beranda: muat ulang agar status Tersedia/Penuh terbaru.
             if (index == 0 && _navIndex != 0) _loadCourts();
             setState(() => _navIndex = index);
@@ -328,7 +353,9 @@ class _HomePageState extends State<HomePage> {
       return const HistoryPage();
     }
     if (_navIndex == 3) {
-      return const AccountPage();
+      return AuthService.instance.isGuest
+          ? const GuestAccountView()
+          : const AccountPage();
     }
     return Column(
       children: [
@@ -503,11 +530,6 @@ class _HomePageState extends State<HomePage> {
         )
     );
   }
-
-// Ikon keranjang di AppBar + badge jumlah item. Stack + Positioned
-// dipakai supaya badge bisa "menempel" di pojok kanan atas ikon.
-// Badge hanya muncul kalau keranjang tidak kosong.
-
 
   // Logo + tulisan "PadelBook" di kiri atas. Diketuk = muat ulang daftar
   // tempat (menggantikan tombol refresh yang dulu ada di kanan atas).

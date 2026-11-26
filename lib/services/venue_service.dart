@@ -26,7 +26,7 @@ class VenueService {
 
   // ---------------- PELANGGAN ----------------
   Future<List<PadelCourt>> fetchApproved() async {
-    final headers = await _headers();
+    final headers = await _auth.readHeaders();
     final res = await ApiClient.send(() => http.get(
       Uri.parse(
           '${SupabaseConfig.restUrl}/venues?status=eq.disetujui&select=*&order=created_at.desc,name.asc'),

@@ -80,6 +80,15 @@ class ApiClient {
     if (m.contains('email not confirmed')) {
       return 'Email belum dikonfirmasi. Cek kotak masuk emailmu.';
     }
+    if (m.contains('for security purposes') || m.contains('once every')) {
+      return 'Tunggu sekitar 1 menit sebelum meminta kode lagi.';
+    }
+    if (m.contains('expired or is invalid') || m.contains('otp_expired')) {
+      return 'Kode salah atau sudah kedaluwarsa. Minta kode baru.';
+    }
+    if (m.contains('different from the old password')) {
+      return 'Kata sandi baru harus berbeda dari kata sandi lama.';
+    }
     if (m.contains('rate limit') || m.contains('too many')) {
       return 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.';
     }

@@ -6,11 +6,16 @@ import '../../utils/validators.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/auth_header.dart';
 import '../../widgets/primary_button.dart';
+import '../home_page.dart';
 import '../role_router.dart';
+import 'forgot_password_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  // Pesan opsional di atas form, diisi saat tamu diarahkan ke sini
+  // (mis. "Masuk dulu untuk melihat riwayat pesananmu.").
+  final String? notice;
+  const LoginPage({super.key, this.notice});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -57,9 +62,47 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Lupa kata sandi: halaman ini mengembalikan email kalau kata sandi
+  // berhasil diganti, supaya kolom email di sini terisi otomatis.
+  Future<void> _openForgotPassword() async {
+    final email = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ForgotPasswordPage(initialEmail: _emailController.text.trim()),
+      ),
+    );
+    if (email != null && mounted) {
+      _emailController.text = email;
+      _passwordController.clear();
+      showMessage(context, 'Kata sandi berhasil diubah. Silakan masuk.');
+    }
+  }
+
+  // Masuk sebagai tamu: bisa melihat lapangan/kelas, tapi booking, favorit,
+  // dan riwayat akan mengarahkan kembali ke Login / Daftar.
+  void _continueAsGuest() {
+    AuthService.instance.enterGuest();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isGuest = AuthService.instance.isGuest;
+
     return Scaffold(
+      // Kalau dibuka dari mode tamu, ada tombol kembali ke aplikasi.
+      appBar: isGuest
+          ? AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      )
+          : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -77,7 +120,31 @@ class _LoginPageState extends State<LoginPage> {
                       title: 'Selamat Datang',
                       subtitle: 'Masuk untuk reservasi lapangan padel',
                     ),
-                    const SizedBox(height: 28),
+                    if (widget.notice != null) ...[
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.pink.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.pink.shade100),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                size: 18, color: Colors.pink.shade300),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                widget.notice!,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
                     AppTextField(
                       controller: _emailController,
                       label: 'Email',
@@ -106,7 +173,14 @@ class _LoginPageState extends State<LoginPage> {
                                 () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _loading ? null : _openForgotPassword,
+                        child: const Text('Lupa kata sandi?'),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     PrimaryButton(
                       label: 'Masuk',
                       loading: _loading,
@@ -132,6 +206,45 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
+                    // Tombol tamu hanya muncul kalau belum dalam mode tamu.
+                    if (!isGuest) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('atau',
+                                style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 12)),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: _loading ? null : _continueAsGuest,
+                        icon: const Icon(Icons.explore_outlined, size: 18),
+                        label: const Text('Masuk sebagai Tamu'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.pink.shade300,
+                          side: BorderSide(color: Colors.pink.shade200),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Lihat lapangan & kelas dulu tanpa akun.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 11),
+                      ),
+                    ],
                   ],
                 ),
               ),
