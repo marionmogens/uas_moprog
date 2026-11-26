@@ -43,9 +43,8 @@ const List<HelpSection> helpSections = [
           'Setelah memilih jadwal, ketuk Lanjut ke Ringkasan untuk memeriksa pesananmu sebelum membayar.'),
       HelpStep('7. Bayar',
           'Pilih metode pembayaran (Transfer Bank atau E-Wallet), lalu ketuk Bayar Sekarang. Pembayaran di aplikasi ini adalah simulasi.'),
-      HelpStep('8. Cek riwayat dan beri ulasan',
-          // langkah riwayat
-          'Semua pesanan ada di tab Riwayat lengkap dengan kode booking. Ketuk satu pesanan untuk melihat detailnya. Pesanan yang sudah dibayar tidak bisa dibatalkan. Setelah bermain, ketuk Beri Ulasan untuk memberi bintang dan komentar.'
+      HelpStep('8. Cek aktivitas dan beri ulasan',
+          'Semua pesanan ada di tab Aktivitas: yang akan datang di Aktif, yang sudah selesai atau dibatalkan di Riwayat. Pesanan bisa dibatalkan sampai H-1 dengan refund 50%. Setelah jadwal selesai, ketuk Beri Ulasan untuk memberi bintang dan komentar.'
       ),
     ],
   ),
@@ -83,7 +82,7 @@ const List<FaqItem> faqItems = [
   FaqItem('Apakah pembayaran di aplikasi ini sungguhan?',
       'Tidak. Pembayaran hanya simulasi untuk demonstrasi, jadi tidak ada uang yang dipotong.'),
   FaqItem('Bagaimana cara membatalkan reservasi?',
-      'Buka tab Riwayat, cari reservasinya, lalu ketuk Batalkan. Slot jam akan terbuka kembali untuk pengguna lain.'),
+      'Buka tab Aktivitas, cari reservasinya di bagian Aktif, lalu ketuk Batalkan. Pembatalan hanya bisa sampai H-1 (tidak bisa di hari-H) dan refund 50% dari total. Slot jam akan terbuka kembali untuk pengguna lain.'),
   FaqItem('Kenapa slot jam tertentu berlabel Penuh?',
       'Slot itu sudah dipesan pengguna lain. Pilih jam atau lapangan lain, atau tanggal yang berbeda.'),
   FaqItem('Aplikasi meminta izin lokasi, apakah aman?',
@@ -102,5 +101,5 @@ const List<FaqItem> faqItems = [
       'Buka tab Akun, ubah di bagian Ubah Profil, lalu ketuk Simpan Perubahan.'),
   // FAQ pembatalan
   FaqItem('Apakah pesanan bisa dibatalkan?',
-      'Tidak. Setelah pembayaran berhasil, pesanan tidak bisa dibatalkan dari aplikasi. Kamu tetap bisa melihat detail pesanan di tab Riwayat.'),
+      'Bisa, paling lambat H-1 sebelum jadwal dengan refund 50%. Di hari-H pesanan tidak bisa dibatalkan. Detail pesanan ada di tab Aktivitas.'),
 ];

@@ -49,6 +49,16 @@ class ApiClient {
       return 'Tempat ini sedang tidak menerima pesanan. '
           'Coba lagi nanti atau pilih tempat lain.';
     }
+    if (m.contains('too_late')) {
+      return 'Pembatalan hanya bisa dilakukan paling lambat H-1 sebelum jadwal. '
+          'Di hari-H reservasi tidak bisa dibatalkan.';
+    }
+    if (m.contains('cannot_cancel')) {
+      return 'Reservasi ini tidak bisa dibatalkan.';
+    }
+    if (m.contains('booking_not_found')) {
+      return 'Data reservasi tidak ditemukan.';
+    }
     if (m.contains('not_admin')) {
       return 'Hanya admin yang bisa melakukan tindakan ini.';
     }

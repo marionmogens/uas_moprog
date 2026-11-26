@@ -321,7 +321,7 @@ class _HomePageState extends State<HomePage> {
         child: CustomBottomNav(
           currentIndex: _navIndex,
           onTap: (index) {
-            // Tamu: tab Favorit & Riwayat langsung diarahkan ke Login / Daftar.
+            // Tamu: tab Favorit & Aktivitas langsung diarahkan ke Login / Daftar.
             if (AuthService.instance.isGuest) {
               if (index == 1) {
                 requireLogin(context,
@@ -330,7 +330,7 @@ class _HomePageState extends State<HomePage> {
               }
               if (index == 2) {
                 requireLogin(context,
-                    message: 'Masuk dulu untuk melihat riwayat pesananmu.');
+                    message: 'Masuk dulu untuk melihat aktivitas pesananmu.');
                 return;
               }
             }

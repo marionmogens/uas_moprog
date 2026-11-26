@@ -151,4 +151,20 @@ class BookingService {
     ));
     if (res.statusCode != 201) throw ApiClient.errorFrom(res);
   }
+
+  // Batalkan reservasi milik sendiri (paling lambat H-1, refund 50%).
+  // Aturan dicek di server lewat fungsi cancel_booking.
+  // Mengembalikan jumlah refund dalam rupiah.
+  Future<int> cancelBooking(String bookingId) async {
+    final headers = await _headers();
+    final res = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.restUrl}/rpc/cancel_booking'),
+      headers: headers,
+      body: jsonEncode({'p_id': bookingId}),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+
+    final body = jsonDecode(res.body);
+    return body is num ? body.toInt() : 0;
+  }
 }

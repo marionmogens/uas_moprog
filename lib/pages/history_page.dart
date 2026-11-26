@@ -11,6 +11,7 @@ import '../widgets/review_dialog.dart';
 //   Aktif   = reservasi yang belum selesai (akan datang / sedang berlangsung)
 //   Riwayat = reservasi selesai, dibatalkan, atau ditolak.
 // Ulasan/rating hanya bisa diberikan dari bagian Riwayat (jadwal sudah lewat).
+// Pembatalan: paling lambat H-1, refund 50%.
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
@@ -35,14 +36,36 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _cancel(Booking booking) async {
+    final refund = booking.totalPrice ~/ 2;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text('Batalkan Reservasi'),
-        content: Text(
-          'Batalkan reservasi ${booking.courtName} pada '
-              '${formatDate(booking.bookingDate)} (${booking.timeSlot})?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Batalkan reservasi ${booking.courtName} pada '
+                  '${formatDate(booking.bookingDate)} (${booking.timeSlot})?',
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Refund 50%: ${formatRupiah(refund)} '
+                    'dari total ${formatRupiah(booking.totalPrice)}.\n'
+                    'Pembatalan hanya bisa paling lambat H-1.',
+                style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -60,9 +83,10 @@ class _HistoryPageState extends State<HistoryPage> {
     if (confirm != true) return;
 
     try {
-      await BookingService.instance.cancelBooking(booking.id);
+      final refunded = await BookingService.instance.cancelBooking(booking.id);
       if (!mounted) return;
-      showMessage(context, 'Reservasi dibatalkan');
+      showMessage(context,
+          'Reservasi dibatalkan. Refund ${formatRupiah(refunded)} (50%)');
       _reload();
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, isError: true);
@@ -94,7 +118,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'Reservasi Saya',
+                      'Aktivitas',
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
@@ -251,8 +275,13 @@ class _HistoryPageState extends State<HistoryPage> {
                       fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
-              const SizedBox(width: 8),
-              BookingPhaseChip(booking: booking),
+              // "Akan datang" dan "Selesai" tidak ditampilkan karena sudah
+              // terlihat dari tab Aktif / Riwayat. Label lain tetap muncul.
+              if (booking.phase == BookingPhase.inProgress ||
+                  booking.isCancelledOrRejected) ...[
+                const SizedBox(width: 8),
+                BookingPhaseChip(booking: booking),
+              ],
             ],
           ),
           const SizedBox(height: 4),
@@ -267,29 +296,33 @@ class _HistoryPageState extends State<HistoryPage> {
             _infoRow(Icons.add_circle_outline, booking.addonsText),
           if (booking.note.isNotEmpty)
             _infoRow(Icons.sticky_note_2_outlined, booking.note),
+          if (booking.status == Booking.statusCancelled &&
+              booking.refundAmount > 0)
+            _infoRow(Icons.payments_outlined,
+                'Refund ${formatRupiah(booking.refundAmount)} (50%)'),
           const Divider(height: 22),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 4,
+          // Total di kiri, tombol aksi rata kanan dalam satu baris.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Total • ${booking.paymentMethod}',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Total • ${booking.paymentMethod}',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade600)),
+                    Text(
+                      formatRupiah(booking.totalPrice),
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade600)),
-                  Text(
-                    formatRupiah(booking.totalPrice),
-                    style: TextStyle(
-                      color: Colors.pink.shade300,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                        color: Colors.pink.shade300,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               // Hanya muncul di Riwayat, setelah jadwal selesai.
               if (booking.canReview)
@@ -306,7 +339,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                 ),
-              // Hanya muncul di Aktif, sebelum jadwal dimulai.
+              // Hanya muncul di Aktif, sampai H-1.
               if (booking.canCancel)
                 OutlinedButton(
                   onPressed: () => _cancel(booking),
@@ -325,7 +358,11 @@ class _HistoryPageState extends State<HistoryPage> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Ulasan bisa diberikan setelah jadwal selesai.',
+                booking.canCancel
+                    ? 'Bisa dibatalkan sampai H-1 (refund 50%). '
+                    'Ulasan bisa diberikan setelah jadwal selesai.'
+                    : 'Sudah hari-H, reservasi tidak bisa dibatalkan. '
+                    'Ulasan bisa diberikan setelah jadwal selesai.',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
               ),
             ),

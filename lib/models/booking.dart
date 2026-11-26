@@ -50,6 +50,7 @@ class Booking {
   final String paymentMethod;
   final String status;
   final DateTime createdAt;
+  final int refundAmount; // diisi server saat dibatalkan (50% dari total)
 
   const Booking({
     required this.id,
@@ -70,6 +71,7 @@ class Booking {
     required this.paymentMethod,
     required this.status,
     required this.createdAt,
+    this.refundAmount = 0,
   });
 
   // ---- Fase reservasi (dihitung dari tanggal + jam slot) ----
@@ -101,10 +103,15 @@ class Booking {
       phase == BookingPhase.upcoming || phase == BookingPhase.inProgress;
   bool get isFinished => phase == BookingPhase.finished;
 
-  // Batal hanya sebelum jadwal dimulai. Ulasan hanya setelah jadwal selesai.
-  bool get canCancel =>
-      (status == statusPending || status == statusConfirmed) &&
-          startTime.isAfter(DateTime.now());
+  // Batal hanya sampai H-1 (tidak bisa di hari-H). Refund 50%.
+  // Ulasan hanya setelah jadwal selesai.
+  bool get canCancel {
+    if (status != statusPending && status != statusConfirmed) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return bookingDate.isAfter(today);
+  }
+
   bool get canReview => isFinished;
 
   String get displayLabel {
@@ -163,6 +170,7 @@ class Booking {
       paymentMethod: (json['payment_method'] ?? '') as String,
       status: (json['status'] ?? statusConfirmed) as String,
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+      refundAmount: (json['refund_amount'] as num?)?.toInt() ?? 0,
     );
   }
 }

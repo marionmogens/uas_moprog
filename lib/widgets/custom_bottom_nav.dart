@@ -19,9 +19,9 @@ const List<NavItemData> navItems = [
       activeIcon: Icons.favorite,
       label: 'Favorit'),
   NavItemData(
-      icon: Icons.history_outlined,
-      activeIcon: Icons.history,
-      label: 'Riwayat'),
+      icon: Icons.receipt_long_outlined,
+      activeIcon: Icons.receipt_long,
+      label: 'Aktivitas'),
   NavItemData(
       icon: Icons.person_outline, activeIcon: Icons.person, label: 'Akun'),
 ];
