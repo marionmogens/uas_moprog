@@ -11,6 +11,7 @@ import 'admin_actions.dart';
 import 'admin_reviews_tab.dart';
 import 'admin_submissions_tab.dart';
 import 'admin_venues_tab.dart';
+import 'admin_bookings_tab.dart';
 
 const List<NavItemData> _adminNav = [
   NavItemData(
@@ -19,6 +20,10 @@ const List<NavItemData> _adminNav = [
       icon: Icons.storefront_outlined,
       activeIcon: Icons.storefront,
       label: 'Tempat'),
+  NavItemData(
+      icon: Icons.bar_chart_outlined,
+      activeIcon: Icons.bar_chart,
+      label: 'Pesanan'),
   NavItemData(
       icon: Icons.reviews_outlined, activeIcon: Icons.reviews, label: 'Ulasan'),
   NavItemData(
@@ -76,7 +81,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
   }
 
   Widget _body() {
-    if (_navIndex == 3) return const AccountPage(isAdminView: true);
+    if (_navIndex == 4) return const AccountPage(isAdminView: true);
+    if (_navIndex == 2) return const AdminBookingsTab();
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
@@ -107,7 +113,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           onRefresh: _load,
           onDecision: _decide,
         );
-      case 2:
+      case 3:
         return AdminReviewsTab(reviews: _reviews, onRefresh: _load);
       default:
         return AdminSubmissionsTab(

@@ -1,3 +1,7 @@
+import 'padel_court.dart';
+
+enum BookingPhase { upcoming, inProgress, finished, cancelled, rejected }
+
 class BookingAddon {
   final String name;
   final int price;
@@ -68,7 +72,55 @@ class Booking {
     required this.createdAt,
   });
 
-  bool get canReview => status != statusCancelled && status != statusRejected;
+  // ---- Fase reservasi (dihitung dari tanggal + jam slot) ----
+  // Slot ke-0 = jam 06:00, tiap slot 1 jam. Jadwal selesai di akhir slot terakhir.
+  bool get isCancelledOrRejected =>
+      status == statusCancelled || status == statusRejected;
+
+  int get _firstSlot =>
+      slotIndexes.isEmpty ? 0 : slotIndexes.reduce((a, b) => a < b ? a : b);
+  int get _lastSlot =>
+      slotIndexes.isEmpty ? 0 : slotIndexes.reduce((a, b) => a > b ? a : b);
+
+  DateTime get startTime => DateTime(bookingDate.year, bookingDate.month,
+      bookingDate.day, PadelCourt.firstSlotHour + _firstSlot);
+  DateTime get endTime => DateTime(bookingDate.year, bookingDate.month,
+      bookingDate.day, PadelCourt.firstSlotHour + _lastSlot + 1);
+
+  BookingPhase get phase {
+    if (status == statusCancelled) return BookingPhase.cancelled;
+    if (status == statusRejected) return BookingPhase.rejected;
+    final now = DateTime.now();
+    if (!endTime.isAfter(now)) return BookingPhase.finished;
+    if (!startTime.isAfter(now)) return BookingPhase.inProgress;
+    return BookingPhase.upcoming;
+  }
+
+  // Tab "Aktif" = belum selesai; tab "Riwayat" = selesai / dibatalkan / ditolak.
+  bool get isActive =>
+      phase == BookingPhase.upcoming || phase == BookingPhase.inProgress;
+  bool get isFinished => phase == BookingPhase.finished;
+
+  // Batal hanya sebelum jadwal dimulai. Ulasan hanya setelah jadwal selesai.
+  bool get canCancel =>
+      (status == statusPending || status == statusConfirmed) &&
+          startTime.isAfter(DateTime.now());
+  bool get canReview => isFinished;
+
+  String get displayLabel {
+    switch (phase) {
+      case BookingPhase.upcoming:
+        return status == statusPending ? 'Menunggu konfirmasi' : 'Akan datang';
+      case BookingPhase.inProgress:
+        return 'Sedang berlangsung';
+      case BookingPhase.finished:
+        return 'Selesai';
+      case BookingPhase.cancelled:
+        return 'Dibatalkan';
+      case BookingPhase.rejected:
+        return 'Ditolak';
+    }
+  }
 
   String get statusLabel {
     switch (status) {

@@ -6,6 +6,7 @@ import '../../widgets/reviews_section.dart';
 import '../../widgets/star_rating.dart';
 import '../../widgets/status_chip.dart';
 import 'admin_actions.dart';
+import '../venue_bookings_page.dart';
 
 class AdminVenueDetailPage extends StatefulWidget {
   final PadelCourt venue;
@@ -153,6 +154,21 @@ class _AdminVenueDetailPageState extends State<AdminVenueDetailPage> {
                         style: TextStyle(fontSize: 12, color: Colors.red.shade700)),
                   ),
                 ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VenueBookingsPage(
+                        venueId: v.id,
+                        venueName: v.name,
+                        accent: adminColor,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                  label: const Text('Lihat pesanan & total pendapatan'),
+                ),
                 _title('Informasi'),
                 _row(Icons.category_outlined,
                     '${v.category} • ${v.isIndoor ? 'Indoor' : 'Outdoor'}${v.isClass ? '' : ' • ${v.fieldCount} lapangan'}'),

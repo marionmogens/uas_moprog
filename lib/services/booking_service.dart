@@ -6,6 +6,7 @@ import '../models/booking_draft.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
 import 'auth_service.dart';
+import '../models/venue_stats.dart';
 
 class BookingService {
   BookingService._();
@@ -22,10 +23,14 @@ class BookingService {
   String _dateOnly(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+  // Reservasi milik user yang sedang login. Filter user_id WAJIB: pemilik &
+  // admin punya akses baca ke pesanan orang lain, jangan ikut tampil di Riwayat.
   Future<List<Booking>> fetchMyBookings() async {
     final headers = await _headers();
+    final uid = _auth.currentUser!.id;
     final res = await ApiClient.send(() => http.get(
-      Uri.parse('${SupabaseConfig.restUrl}/bookings?select=*&order=created_at.desc'),
+      Uri.parse(
+          '${SupabaseConfig.restUrl}/bookings?user_id=eq.$uid&select=*&order=booking_date.desc,created_at.desc'),
       headers: headers,
     ));
     if (res.statusCode != 200) throw ApiClient.errorFrom(res);
@@ -33,6 +38,49 @@ class BookingService {
     final list = jsonDecode(res.body) as List<dynamic>;
     return list
         .map((row) => Booking.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  // Semua pesanan di satu tempat (untuk pemilik tempat itu & admin).
+  Future<List<Booking>> fetchForVenue(
+      String venueId, {
+        DateTime? from,
+        DateTime? to,
+      }) async {
+    final headers = await _headers();
+    final query = StringBuffer(
+        'court_id=eq.$venueId&select=*&order=booking_date.desc,created_at.desc&limit=500');
+    if (from != null) query.write('&booking_date=gte.${_dateOnly(from)}');
+    if (to != null) query.write('&booking_date=lte.${_dateOnly(to)}');
+    final res = await ApiClient.send(() => http.get(
+      Uri.parse('${SupabaseConfig.restUrl}/bookings?$query'),
+      headers: headers,
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list
+        .map((row) => Booking.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  // Ringkasan total pesanan & pendapatan per tempat.
+  // Pemilik: hanya tempatnya. Admin: semua tempat.
+  Future<List<VenueStats>> fetchVenueStats({DateTime? from, DateTime? to}) async {
+    final headers = await _headers();
+    final res = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.restUrl}/rpc/venue_booking_stats'),
+      headers: headers,
+      body: jsonEncode({
+        'p_from': from == null ? null : _dateOnly(from),
+        'p_to': to == null ? null : _dateOnly(to),
+      }),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list
+        .map((row) => VenueStats.fromJson(row as Map<String, dynamic>))
         .toList();
   }
 
