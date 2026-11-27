@@ -8,14 +8,13 @@ import '../../widgets/custom_bottom_nav.dart';
 import '../account_page.dart';
 import 'admin_actions.dart';
 import 'admin_reviews_tab.dart';
-import 'admin_submissions_tab.dart';
 import 'admin_venues_tab.dart';
 import 'admin_bookings_tab.dart';
 import 'admin_revenue_tab.dart';
 
+// Urutan tab (indeks harus sama dengan _body di bawah):
+// 0 Tempat, 1 Pesanan, 2 Ulasan, 3 Pendapatan, 4 Akun
 const List<NavItemData> _adminNav = [
-  NavItemData(
-      icon: Icons.inbox_outlined, activeIcon: Icons.inbox, label: 'Pengajuan'),
   NavItemData(
       icon: Icons.storefront_outlined,
       activeIcon: Icons.storefront,
@@ -85,9 +84,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
   }
 
   Widget _body() {
-    if (_navIndex == 4) return const AccountPage(isAdminView: true);
+    // Tab yang memuat datanya sendiri.
+    if (_navIndex == 1) return const AdminBookingsTab();
     if (_navIndex == 3) return const AdminRevenueTab();
-    if (_navIndex == 2) return const AdminBookingsTab();
+    if (_navIndex == 4) return const AccountPage(isAdminView: true);
+
+    // Tab Tempat (0) dan Ulasan (2) memakai data yang dimuat di sini.
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
@@ -110,24 +112,15 @@ class _AdminHomePageState extends State<AdminHomePage> {
         ),
       );
     }
-    switch (_navIndex) {
-      case 1:
-        return AdminVenuesTab(
-          venues: _venues,
-          reviews: _reviews,
-          onRefresh: _load,
-          onDecision: _decide,
-        );
-      case 3:
-        return AdminReviewsTab(reviews: _reviews, onRefresh: _load);
-      default:
-        return AdminSubmissionsTab(
-          venues: _venues,
-          reviews: _reviews,
-          onRefresh: _load,
-          onDecision: _decide,
-        );
+    if (_navIndex == 2) {
+      return AdminReviewsTab(reviews: _reviews, onRefresh: _load);
     }
+    return AdminVenuesTab(
+      venues: _venues,
+      reviews: _reviews,
+      onRefresh: _load,
+      onDecision: _decide,
+    );
   }
 
   @override

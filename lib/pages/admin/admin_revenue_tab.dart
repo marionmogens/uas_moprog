@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../config/revenue_config.dart';
 import '../../models/revenue.dart';
 import '../../services/api_exception.dart';
 import '../../services/revenue_service.dart';
@@ -7,7 +6,8 @@ import '../../utils/formatters.dart';
 import 'admin_actions.dart';
 
 // Tab "Pendapatan" admin: total pendapatan keseluruhan, keuntungan bersih
-// admin (komisi 20%), bagian pemilik (80%), dan rinciannya per tempat.
+// admin, bagian pemilik, dan rinciannya per tempat.
+// Persentase pembagian tidak ditampilkan di sini (dijelaskan di Panduan pemilik).
 class AdminRevenueTab extends StatefulWidget {
   const AdminRevenueTab({super.key});
 
@@ -80,7 +80,6 @@ class _AdminRevenueTabState extends State<AdminRevenueTab> {
                     child: _shareCard(
                       icon: Icons.account_balance_wallet_outlined,
                       title: 'Keuntungan Bersih Admin',
-                      percent: RevenueConfig.platformPercent,
                       amount: summary.platformShare,
                       color: adminColor,
                     ),
@@ -90,7 +89,6 @@ class _AdminRevenueTabState extends State<AdminRevenueTab> {
                     child: _shareCard(
                       icon: Icons.storefront_outlined,
                       title: 'Bagian Pemilik Tempat',
-                      percent: RevenueConfig.ownerPercent,
                       amount: summary.ownerShare,
                       color: Colors.pink.shade400,
                     ),
@@ -154,7 +152,6 @@ class _AdminRevenueTabState extends State<AdminRevenueTab> {
   Widget _shareCard({
     required IconData icon,
     required String title,
-    required int percent,
     required int amount,
     required Color color,
   }) {
@@ -168,24 +165,7 @@ class _AdminRevenueTabState extends State<AdminRevenueTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text('$percent%',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
-              ),
-            ],
-          ),
+          Icon(icon, size: 20, color: color),
           const SizedBox(height: 10),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -223,10 +203,8 @@ class _AdminRevenueTabState extends State<AdminRevenueTab> {
           Row(
             children: [
               _mini('Total', v.gross, Colors.black87),
-              _mini('Admin (${RevenueConfig.platformPercent}%)',
-                  v.platformShare, adminColor),
-              _mini('Pemilik (${RevenueConfig.ownerPercent}%)', v.ownerShare,
-                  Colors.pink.shade400),
+              _mini('Admin', v.platformShare, adminColor),
+              _mini('Pemilik', v.ownerShare, Colors.pink.shade400),
             ],
           ),
         ],

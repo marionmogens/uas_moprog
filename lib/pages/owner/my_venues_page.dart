@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../config/revenue_config.dart';
 import '../../models/padel_court.dart';
 import '../../models/revenue.dart';
 import '../../services/api_exception.dart';
@@ -164,7 +163,7 @@ class _MyVenuesPageState extends State<MyVenuesPage> {
   }
 
   // Ringkasan pendapatan di atas daftar: total pendapatan dan bagian bersih
-  // pemilik setelah komisi PadelBook dipotong.
+  // pemilik setelah komisi PadelBook dipotong (persentase dijelaskan di Panduan).
   Widget _buildRevenueCard(RevenueSummary r) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -202,9 +201,8 @@ class _MyVenuesPageState extends State<MyVenuesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pendapatan Bersih (${RevenueConfig.ownerPercent}%)',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 11)),
+                      const Text('Pendapatan Bersih',
+                          style: TextStyle(color: Colors.white70, fontSize: 11)),
                       const SizedBox(height: 2),
                       FittedBox(
                         fit: BoxFit.scaleDown,
@@ -223,9 +221,8 @@ class _MyVenuesPageState extends State<MyVenuesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Komisi PadelBook (${RevenueConfig.platformPercent}%)',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 11)),
+                      const Text('Komisi PadelBook',
+                          style: TextStyle(color: Colors.white70, fontSize: 11)),
                       const SizedBox(height: 2),
                       FittedBox(
                         fit: BoxFit.scaleDown,
