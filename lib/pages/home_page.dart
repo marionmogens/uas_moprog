@@ -17,6 +17,7 @@ import '../utils/ui_helpers.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/guest_account_view.dart';
 import 'help_page.dart';
+import 'competition/competition_page.dart'; // BARU
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -320,6 +321,18 @@ class _HomePageState extends State<HomePage> {
         top: false,
         child: CustomBottomNav(
           currentIndex: _navIndex,
+          // BARU: tombol bulat pink di tengah -> halaman Kompetisi.
+          // Tamu diarahkan ke Login dulu (sama seperti Favorit & Aktivitas).
+          onCenterTap: () {
+            if (!requireLogin(context,
+                message: 'Masuk dulu untuk memakai fitur kompetisi.')) {
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CompetitionPage()),
+            );
+          },
           onTap: (index) {
             // Tamu: tab Favorit & Aktivitas langsung diarahkan ke Login / Daftar.
             if (AuthService.instance.isGuest) {
