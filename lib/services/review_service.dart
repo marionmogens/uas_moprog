@@ -4,6 +4,7 @@ import '../config/supabase_config.dart';
 import '../models/review.dart';
 import 'api_client.dart';
 import 'auth_service.dart';
+import 'api_exception.dart';
 
 class ReviewService {
   ReviewService._();
@@ -62,6 +63,23 @@ class ReviewService {
     ));
     if (res.statusCode != 201 && res.statusCode != 204 && res.statusCode != 200) {
       throw ApiClient.errorFrom(res);
+    }
+  }
+
+  // Hapus ulasan. Yang boleh hanya PEMILIK tempat tersebut (dijaga RLS di
+  // database). Jika bukan ulasan di tempatnya, database menghapus 0 baris,
+  // jadi hasilnya dicek supaya tidak terlihat "berhasil" padahal tidak.
+  Future<void> delete(String reviewId) async {
+    final headers = {...await _headers(), 'Prefer': 'return=representation'};
+    final res = await ApiClient.send(() => http.delete(
+      Uri.parse('${SupabaseConfig.restUrl}/reviews?id=eq.$reviewId'),
+      headers: headers,
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+    final deleted = jsonDecode(res.body) as List<dynamic>;
+    if (deleted.isEmpty) {
+      throw const ApiException(
+          'Ulasan ini tidak bisa dihapus. Hanya pemilik tempatnya yang bisa menghapus.');
     }
   }
 }

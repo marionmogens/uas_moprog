@@ -25,6 +25,9 @@ class _OwnerVenueDetailPageState extends State<OwnerVenueDetailPage> {
   bool _busy = false;
   int? _stars; // null = semua ulasan
   late Future<List<Review>> _reviews;
+  // Diisi setelah ada ulasan yang dihapus, supaya rating di atas ikut berubah.
+  double? _rating;
+  int? _count;
 
   PadelCourt get v => widget.venue;
   Color get _accent => Colors.pink.shade300;
@@ -67,6 +70,49 @@ class _OwnerVenueDetailPageState extends State<OwnerVenueDetailPage> {
     if (saved == true && mounted) {
       showMessage(context, 'Perubahan disimpan');
       Navigator.pop(context); // daftar Kelola Lapangan akan memuat ulang
+    }
+  }
+
+  // Hapus ulasan yang tidak pantas (hanya ulasan di tempat milikmu sendiri).
+  Future<void> _confirmDelete(Review r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Hapus ulasan?'),
+        content: Text(
+          'Ulasan dari ${r.userName} akan dihapus permanen dan rating tempat '
+              'dihitung ulang. Hapus hanya jika ulasan tidak pantas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Hapus', style: TextStyle(color: Colors.red.shade600)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ReviewService.instance.delete(r.id);
+      final list = await ReviewService.instance.fetchForVenue(v.id, limit: 200);
+      if (!mounted) return;
+      final avg = list.isEmpty
+          ? 0.0
+          : list.fold<int>(0, (s, x) => s + x.rating) / list.length;
+      setState(() {
+        _reviews = Future.value(list);
+        _count = list.length;
+        _rating = double.parse(avg.toStringAsFixed(1));
+      });
+      showMessage(context, 'Ulasan dihapus');
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, isError: true);
     }
   }
 
@@ -152,12 +198,12 @@ class _OwnerVenueDetailPageState extends State<OwnerVenueDetailPage> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    StarRating(rating: v.rating),
+                    StarRating(rating: _rating ?? v.rating),
                     const SizedBox(width: 6),
                     Text(
-                      v.reviewCount == 0
+                      (_count ?? v.reviewCount) == 0
                           ? 'Belum ada ulasan'
-                          : '${v.rating} dari ${v.reviewCount} ulasan',
+                          : '${_rating ?? v.rating} dari ${_count ?? v.reviewCount} ulasan',
                       style:
                       TextStyle(fontSize: 12, color: Colors.grey.shade700),
                     ),
@@ -326,7 +372,8 @@ class _OwnerVenueDetailPageState extends State<OwnerVenueDetailPage> {
                           color: Colors.grey.shade600, fontSize: 12)),
                 ),
               ),
-            for (final r in shown) ReviewTile(review: r),
+            for (final r in shown)
+              ReviewTile(review: r, onDelete: () => _confirmDelete(r)),
           ],
         );
       },

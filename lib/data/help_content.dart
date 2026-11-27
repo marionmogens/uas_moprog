@@ -5,7 +5,7 @@ class HelpStep {
 }
 
 class HelpSection {
-  final String id; // 'pelanggan' | 'pemilik' | 'admin'
+  final String id; // 'pelanggan' | 'pemilik'
   final String title;
   final String intro;
   final List<HelpStep> steps;
@@ -23,57 +23,51 @@ class FaqItem {
   const FaqItem(this.question, this.answer);
 }
 
+// Buku panduan hanya untuk Pelanggan dan Pemilik Tempat.
+// Admin tidak memiliki buku panduan.
 const List<HelpSection> helpSections = [
   HelpSection(
     id: 'pelanggan',
     title: 'Untuk Pelanggan: dari daftar sampai bermain',
     intro: 'Alur lengkap memesan lapangan atau kelas padel.',
     steps: [
-      HelpStep('1. Buat akun dan masuk',
-          'Di halaman Masuk ketuk Daftar, isi nama, nomor HP, email, dan kata sandi (minimal 6 karakter), centang syarat & ketentuan, lalu ketuk Daftar. Data nama dan nomor HP tersimpan di akunmu dan bisa diubah di tab Akun.'),
-      HelpStep('2. Cari lapangan atau kelas',
+      HelpStep('1. Buat akun dan verifikasi email',
+          'Di halaman Masuk ketuk Daftar, isi nama, nomor HP, email, dan kata sandi (minimal 6 karakter), centang syarat & ketentuan, lalu ketuk Daftar. Kami mengirim kode verifikasi ke emailmu: masukkan kode itu di halaman Verifikasi Email dan kamu langsung masuk ke aplikasi. Kode tidak datang? Cek folder spam atau ketuk Kirim ulang kode.'),
+      HelpStep('2. Masuk, lupa kata sandi, atau jadi tamu',
+          'Masuk dengan email dan kata sandi. Lupa kata sandi? Ketuk Lupa kata sandi, masukkan emailmu, lalu isi kode yang dikirim beserta kata sandi baru (tanpa kata sandi lama). Belum mau daftar? Ketuk Masuk sebagai Tamu untuk melihat lapangan dan kelas lebih dulu. Saat memesan, menyimpan favorit, atau membuka Riwayat, kamu akan diminta masuk atau daftar.'),
+      HelpStep('3. Cari lapangan atau kelas',
           'Di tab Beranda pilih kategori Lapangan atau Kelas. Gunakan kolom pencarian untuk nama atau lokasi. Ketuk Dekat saya agar lapangan diurutkan dari yang terdekat (aplikasi akan meminta izin lokasi). Ketuk ikon filter untuk memilih kota, budget, jarak, indoor/outdoor, dan urutan.'),
-      HelpStep('3. Lihat detail',
+      HelpStep('4. Lihat detail',
           'Ketuk kartu untuk melihat foto, deskripsi, fasilitas, rating dan ulasan. Tekan lama kartu untuk preview cepat, ketuk dua kali atau ikon hati untuk menyimpan ke Favorit.'),
-      HelpStep('4. Atur pesanan',
+      HelpStep('5. Atur pesanan',
           'Pilih durasi (1 atau 2 jam untuk lapangan), tambahan seperti sewa raket, bola, handuk & air mineral, atau coach (jumlahnya bisa diatur dengan tombol + dan -), dan tulis catatan untuk pengelola bila perlu. Total harga berubah otomatis.'),
-      HelpStep('5. Pilih jadwal',
+      HelpStep('6. Pilih jadwal',
           'Ketuk Pilih Jadwal, tentukan tanggal (30 hari ke depan), lapangan, dan jam. Slot berlabel Penuh sudah dipesan orang lain. Jumlah jam yang dipilih harus sama dengan durasi dan berurutan. Untuk Kelas, pilih salah satu sesi 2 jam.'),
-      HelpStep('6. Ringkasan',
-          'Setelah memilih jadwal, ketuk Lanjut ke Ringkasan untuk memeriksa pesananmu sebelum membayar.'),
-      HelpStep('7. Bayar',
-          'Pilih metode pembayaran (Transfer Bank atau E-Wallet), lalu ketuk Bayar Sekarang. Pembayaran di aplikasi ini adalah simulasi.'),
-      HelpStep('8. Cek aktivitas dan beri ulasan',
-          'Semua pesanan ada di tab Aktivitas: yang akan datang di Aktif, yang sudah selesai atau dibatalkan di Riwayat. Pesanan bisa dibatalkan sampai H-1 dengan refund 50%. Setelah jadwal selesai, ketuk Beri Ulasan untuk memberi bintang dan komentar.'
-      ),
+      HelpStep('7. Ringkasan',
+          'Setelah memilih jadwal, ketuk Lanjut ke Ringkasan untuk memeriksa pesananmu. Nama dan nomor HP otomatis diambil dari akunmu.'),
+      HelpStep('8. Bayar',
+          'Pilih metode pembayaran (Transfer Bank atau E-Wallet), lalu ketuk Bayar Sekarang. Pembayaran di aplikasi ini adalah simulasi dan langsung berhasil.'),
+      HelpStep('9. Cek riwayat dan beri ulasan',
+          'Semua pesanan ada di tab Riwayat lengkap dengan kode booking. Ketuk satu pesanan untuk melihat detailnya. Pesanan yang sudah dibayar tidak bisa dibatalkan. Setelah bermain, ketuk Beri Ulasan untuk memberi bintang dan komentar.'),
     ],
   ),
   HelpSection(
     id: 'pemilik',
     title: 'Untuk Pemilik Lapangan',
-    intro: 'Cara memasukkan lapangan atau kelasmu ke PadelBook.',
+    intro: 'Cara memasukkan lapangan atau kelasmu ke PadelBook dan mengelolanya.',
     steps: [
-      HelpStep('1. Buka Tempat Saya',
-          'Masuk ke tab Akun lalu ketuk Daftarkan Lapanganmu (atau Tempat Saya). Tidak perlu membuat akun baru; akun pelangganmu otomatis menjadi Pemilik Tempat setelah pengajuan pertama disetujui.'),
+      HelpStep('1. Buka Kelola Lapangan',
+          'Masuk ke tab Akun lalu ketuk Daftarkan Lapanganmu (atau Kelola Lapangan). Tidak perlu membuat akun baru; akun pelangganmu otomatis menjadi Pemilik Tempat setelah pengajuan pertama disetujui.'),
       HelpStep('2. Isi data tempat',
           'Ketuk Tambah Tempat. Pilih jenis (Lapangan atau Kelas), isi nama, kota, alamat, harga per jam, jam buka-tutup, jumlah lapangan, fasilitas, deskripsi, dan link foto. Isi titik lokasi dengan tombol Pakai lokasiku sekarang agar muncul di pencarian terdekat.'),
       HelpStep('3. Tunggu persetujuan',
           'Pengajuan berstatus Menunggu persetujuan sampai admin meninjaunya. Jika ditolak, alasan admin tampil di kartu tempat; perbaiki datanya lewat tombol Ubah lalu ketuk Ajukan Ulang.'),
       HelpStep('4. Kelola tempat',
-          'Setelah Disetujui, tempatmu tampil di Beranda pelanggan. Gunakan sakelar Menerima pesanan untuk menutup sementara pemesanan, dan lihat rating serta jumlah ulasan di kartu tempat.'),
-    ],
-  ),
-  HelpSection(
-    id: 'admin',
-    title: 'Untuk Admin',
-    intro: 'Tugas admin: meninjau pengajuan dan memantau kualitas tempat.',
-    steps: [
-      HelpStep('1. Tab Pengajuan',
-          'Menampilkan ringkasan angka dan antrean pengajuan. Periksa data tempat dan pengaju, lalu ketuk Setujui atau Tolak. Penolakan wajib disertai alasan yang akan dilihat pemilik.'),
-      HelpStep('2. Tab Tempat',
-          'Daftar semua tempat dengan filter status dan pencarian. Ketuk satu tempat untuk melihat detail, rating, ulasan, serta menangguhkan atau mengaktifkan kembali.'),
-      HelpStep('3. Tab Ulasan',
-          'Melihat seluruh ulasan pengguna, rata-rata rating, sebaran bintang, dan menyaring berdasarkan jumlah bintang.'),
+          'Setelah Disetujui, tempatmu tampil di Beranda pelanggan. Gunakan sakelar Menerima pesanan untuk menutup sementara pemesanan. Ketuk kartu tempat untuk melihat detail, rating, dan semua ulasan, atau mengubah datanya.'),
+      HelpStep('5. Hapus ulasan yang tidak pantas',
+          'Di detail tempatmu, ketuk ikon tempat sampah pada ulasan yang tidak pantas, lalu konfirmasi. Rating tempat dihitung ulang otomatis. Kamu hanya bisa menghapus ulasan di lapangan atau kelas milikmu sendiri.'),
+      HelpStep('6. Lihat pendapatan',
+          'Di bagian atas Kelola Lapangan tampil Total Pendapatan dari pesanan yang sudah dibayar, beserta Pendapatan Bersih 80% milikmu setelah komisi PadelBook 20%. Pendapatan tiap tempat juga tampil di kartunya masing-masing.'),
     ],
   ),
 ];
@@ -81,8 +75,16 @@ const List<HelpSection> helpSections = [
 const List<FaqItem> faqItems = [
   FaqItem('Apakah pembayaran di aplikasi ini sungguhan?',
       'Tidak. Pembayaran hanya simulasi untuk demonstrasi, jadi tidak ada uang yang dipotong.'),
-  FaqItem('Bagaimana cara membatalkan reservasi?',
-      'Buka tab Aktivitas, cari reservasinya di bagian Aktif, lalu ketuk Batalkan. Pembatalan hanya bisa sampai H-1 (tidak bisa di hari-H) dan refund 50% dari total. Slot jam akan terbuka kembali untuk pengguna lain.'),
+  FaqItem('Apakah pesanan bisa dibatalkan?',
+      'Tidak. Setelah pembayaran berhasil, pesanan tidak bisa dibatalkan dari aplikasi. Kamu tetap bisa melihat detail pesanan di tab Riwayat.'),
+  FaqItem('Kenapa saya harus verifikasi email?',
+      'Supaya akunmu benar-benar milikmu. Setelah mendaftar, masukkan kode yang dikirim ke emailmu dan kamu langsung masuk. Tanpa verifikasi, akun belum bisa dipakai masuk.'),
+  FaqItem('Kode verifikasi tidak masuk ke email, bagaimana?',
+      'Cek folder spam, pastikan emailnya benar, lalu ketuk Kirim ulang kode (tersedia setiap 60 detik). Kalau email salah ketik, kembali dan daftar ulang dengan email yang benar.'),
+  FaqItem('Saya lupa kata sandi, bagaimana?',
+      'Di halaman Masuk ketuk Lupa kata sandi, masukkan email, lalu isi kode yang dikirim dan kata sandi baru. Kata sandi lama tidak diperlukan.'),
+  FaqItem('Apa bedanya masuk sebagai tamu?',
+      'Tamu bisa melihat lapangan, kelas, dan ulasan tanpa akun. Untuk memesan, menyimpan favorit, atau melihat riwayat, kamu perlu masuk atau mendaftar dulu.'),
   FaqItem('Kenapa slot jam tertentu berlabel Penuh?',
       'Slot itu sudah dipesan pengguna lain. Pilih jam atau lapangan lain, atau tanggal yang berbeda.'),
   FaqItem('Aplikasi meminta izin lokasi, apakah aman?',
@@ -94,12 +96,13 @@ const List<FaqItem> faqItems = [
   FaqItem('Bagaimana cara menjadi pemilik lapangan?',
       'Buka tab Akun lalu ketuk Daftarkan Lapanganmu, isi data tempat, dan kirim. Setelah admin menyetujui, kamu menjadi Pemilik Tempat.'),
   FaqItem('Pengajuan tempatku ditolak, apa yang harus dilakukan?',
-      'Baca alasan penolakan di kartu tempat pada halaman Tempat Saya, perbaiki datanya lewat Ubah, lalu ketuk Ajukan Ulang.'),
+      'Baca alasan penolakan di kartu tempat pada halaman Kelola Lapangan, perbaiki datanya lewat Ubah, lalu ketuk Ajukan Ulang.'),
+  FaqItem('Berapa pembagian pendapatan untuk pemilik tempat?',
+      'Dari setiap pesanan yang sudah dibayar, 80% menjadi pendapatan bersih pemilik tempat dan 20% adalah komisi PadelBook. Totalnya bisa dilihat di bagian atas halaman Kelola Lapangan.'),
+  FaqItem('Bisakah pemilik menghapus ulasan?',
+      'Bisa, tetapi hanya ulasan yang tidak pantas dan hanya di lapangan atau kelas miliknya sendiri. Buka detail tempat, ketuk ikon tempat sampah pada ulasan, lalu konfirmasi.'),
   FaqItem('Siapa yang bisa memberi ulasan?',
       'Pengguna yang pernah memiliki reservasi (tidak dibatalkan) di tempat tersebut. Satu pengguna satu ulasan per tempat dan bisa diubah dengan memberi ulasan lagi.'),
   FaqItem('Bagaimana mengubah nama atau nomor HP?',
       'Buka tab Akun, ubah di bagian Ubah Profil, lalu ketuk Simpan Perubahan.'),
-  // FAQ pembatalan
-  FaqItem('Apakah pesanan bisa dibatalkan?',
-      'Bisa, paling lambat H-1 sebelum jadwal dengan refund 50%. Di hari-H pesanan tidak bisa dibatalkan. Detail pesanan ada di tab Aktivitas.'),
 ];

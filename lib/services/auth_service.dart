@@ -87,6 +87,40 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------
+  // VERIFIKASI EMAIL SAAT DAFTAR (kode OTP, tanpa membuka browser)
+  // Syarat di Supabase: "Confirm email" aktif, dan template email
+  // "Confirm signup" memuat {{ .Token }} (lihat supabase/email_templates).
+  // verifySignupCode: kode benar -> email terverifikasi + langsung login.
+  // resendSignupCode: kirim ulang kode (mis. dari halaman Masuk).
+  // ---------------------------------------------------------------
+  Future<void> verifySignupCode({
+    required String email,
+    required String code,
+  }) async {
+    final res = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.authUrl}/verify'),
+      headers: _baseHeaders,
+      body: jsonEncode({'type': 'signup', 'email': email, 'token': code}),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (json['access_token'] == null) {
+      throw const ApiException('Kode tidak valid atau sudah kedaluwarsa.');
+    }
+    await _startSession(AuthSession.fromAuthResponse(json));
+  }
+
+  Future<void> resendSignupCode(String email) async {
+    final res = await ApiClient.send(() => http.post(
+      Uri.parse('${SupabaseConfig.authUrl}/resend'),
+      headers: _baseHeaders,
+      body: jsonEncode({'type': 'signup', 'email': email}),
+    ));
+    if (res.statusCode != 200) throw ApiClient.errorFrom(res);
+  }
+
+  // ---------------------------------------------------------------
   // MASUK
   // ---------------------------------------------------------------
   Future<void> signIn({required String email, required String password}) async {

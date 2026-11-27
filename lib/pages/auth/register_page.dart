@@ -8,6 +8,7 @@ import '../../widgets/app_text_field.dart';
 import '../../widgets/auth_header.dart';
 import '../../widgets/primary_button.dart';
 import '../role_router.dart';
+import 'verify_email_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -63,25 +64,14 @@ class _RegisterPageState extends State<RegisterPage> {
               (route) => false,
         );
       } else {
-        // Konfirmasi email aktif di Supabase: akun dibuat, tapi belum bisa
-        // login sebelum email diverifikasi.
-        await showDialog<void>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Cek Emailmu'),
-            content: const Text(
-              'Akun berhasil dibuat. Kami mengirim tautan konfirmasi ke '
-                  'emailmu. Konfirmasi dulu, lalu masuk.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Oke'),
-              ),
-            ],
+        // Email wajib diverifikasi dulu: lanjut ke halaman input kode.
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                VerifyEmailPage(email: _emailController.text.trim()),
           ),
         );
-        if (mounted) Navigator.pop(context); // kembali ke Login
       }
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, isError: true);

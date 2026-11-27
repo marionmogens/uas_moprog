@@ -111,6 +111,8 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildMenu(AppUser user) {
+    // Admin tidak memakai panduan maupun menu pemilik: hanya info akun.
+    if (widget.isAdminView) return const SizedBox.shrink();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -141,11 +143,8 @@ class _AccountPageState extends State<AccountPage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => HelpPage(
-                  role: user.isAdmin
-                      ? 'admin'
-                      : (user.isOwner ? 'pemilik' : 'pelanggan'),
-                ),
+                builder: (_) =>
+                    HelpPage(role: user.isOwner ? 'pemilik' : 'pelanggan'),
               ),
             ),
           ),

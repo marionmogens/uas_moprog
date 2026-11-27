@@ -22,7 +22,14 @@ class ApiClient {
   }
 
   static ApiException errorFrom(http.Response res) {
-    return ApiException(_message(res), statusCode: res.statusCode);
+    String? code;
+    try {
+      final body = jsonDecode(res.body);
+      if (body is Map) {
+        code = (body['error_code'] ?? body['code'])?.toString();
+      }
+    } catch (_) {}
+    return ApiException(_message(res), statusCode: res.statusCode, code: code);
   }
 
   static String _message(http.Response res) {
@@ -88,7 +95,7 @@ class ApiClient {
       return 'Kata sandi terlalu lemah (minimal 6 karakter).';
     }
     if (m.contains('email not confirmed')) {
-      return 'Email belum dikonfirmasi. Cek kotak masuk emailmu.';
+      return 'Email belum diverifikasi. Verifikasi dulu untuk bisa masuk.';
     }
     if (m.contains('for security purposes') || m.contains('once every')) {
       return 'Tunggu sekitar 1 menit sebelum meminta kode lagi.';

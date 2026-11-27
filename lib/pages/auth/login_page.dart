@@ -10,6 +10,7 @@ import '../home_page.dart';
 import '../role_router.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
+import 'verify_email_page.dart';
 
 class LoginPage extends StatefulWidget {
   // Pesan opsional di atas form, diisi saat tamu diarahkan ke sini
@@ -40,6 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     // validate() menjalankan semua validator di form; false = ada yang salah.
     if (!_formKey.currentState!.validate()) return;
 
+    var needVerify = false;
     setState(() => _loading = true);
     try {
       await AuthService.instance.signIn(
@@ -54,6 +56,54 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context) => homeForUser(AuthService.instance.currentUser!),
         ),
             (route) => false,
+      );
+    } on ApiException catch (e) {
+      if (e.code == ApiException.emailNotConfirmed) {
+        needVerify = true; // ditangani di bawah, setelah loading selesai
+      } else if (mounted) {
+        showMessage(context, e.message, isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+
+    if (needVerify && mounted) {
+      await _promptVerifyEmail(_emailController.text.trim());
+    }
+  }
+
+  // Email belum diverifikasi: tawarkan kirim kode lalu buka halaman verifikasi.
+  Future<void> _promptVerifyEmail(String email) async {
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Email belum diverifikasi'),
+        content: Text(
+          'Akun $email belum diverifikasi. Kami kirim kode verifikasi '
+              'ke emailmu supaya kamu bisa masuk.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Kirim Kode'),
+          ),
+        ],
+      ),
+    );
+    if (send != true || !mounted) return;
+
+    setState(() => _loading = true);
+    try {
+      await AuthService.instance.resendSignupCode(email);
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => VerifyEmailPage(email: email)),
       );
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, isError: true);

@@ -40,7 +40,14 @@ class ReviewsSection extends StatelessWidget {
 class ReviewTile extends StatelessWidget {
   final Review review;
   final bool showVenue;
-  const ReviewTile({super.key, required this.review, this.showVenue = false});
+  // Diisi hanya di tampilan pemilik tempat: menampilkan tombol hapus.
+  final VoidCallback? onDelete;
+  const ReviewTile({
+    super.key,
+    required this.review,
+    this.showVenue = false,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +78,16 @@ class ReviewTile extends StatelessWidget {
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ),
+              if (onDelete != null)
+                IconButton(
+                  onPressed: onDelete,
+                  tooltip: 'Hapus ulasan',
+                  icon: Icon(Icons.delete_outline,
+                      size: 20, color: Colors.red.shade400),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
             ],
           ),
           if (review.comment.isNotEmpty) ...[

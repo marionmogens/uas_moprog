@@ -4,7 +4,7 @@ import '../services/help_pdf_service.dart';
 import '../utils/ui_helpers.dart';
 
 class HelpPage extends StatefulWidget {
-  final String role; // 'pelanggan' | 'pemilik' | 'admin'
+  final String role; // 'pelanggan' | 'pemilik'
   const HelpPage({super.key, this.role = 'pelanggan'});
 
   @override
@@ -29,7 +29,7 @@ class _HelpPageState extends State<HelpPage> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = widget.role == 'admin';
-    final accent = isAdmin ? Colors.indigo.shade600 : Colors.pink.shade300;
+    final accent = Colors.pink.shade300;
     return DefaultTabController(
       length: 2,
       child: Scaffold(

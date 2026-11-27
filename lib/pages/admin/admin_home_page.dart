@@ -6,12 +6,12 @@ import '../../services/review_service.dart';
 import '../../services/venue_service.dart';
 import '../../widgets/custom_bottom_nav.dart';
 import '../account_page.dart';
-import '../help_page.dart';
 import 'admin_actions.dart';
 import 'admin_reviews_tab.dart';
 import 'admin_submissions_tab.dart';
 import 'admin_venues_tab.dart';
 import 'admin_bookings_tab.dart';
+import 'admin_revenue_tab.dart';
 
 const List<NavItemData> _adminNav = [
   NavItemData(
@@ -26,6 +26,10 @@ const List<NavItemData> _adminNav = [
       label: 'Pesanan'),
   NavItemData(
       icon: Icons.reviews_outlined, activeIcon: Icons.reviews, label: 'Ulasan'),
+  NavItemData(
+      icon: Icons.payments_outlined,
+      activeIcon: Icons.payments,
+      label: 'Pendapatan'),
   NavItemData(
       icon: Icons.person_outline, activeIcon: Icons.person, label: 'Akun'),
 ];
@@ -82,6 +86,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   Widget _body() {
     if (_navIndex == 4) return const AccountPage(isAdminView: true);
+    if (_navIndex == 3) return const AdminRevenueTab();
     if (_navIndex == 2) return const AdminBookingsTab();
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
@@ -143,12 +148,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Bantuan',
-            icon: const Icon(Icons.help_outline, color: Colors.white),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const HelpPage(role: 'admin'))),
-          ),
           IconButton(
             tooltip: 'Muat ulang',
             icon: const Icon(Icons.refresh, color: Colors.white),
