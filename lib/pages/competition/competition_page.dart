@@ -27,10 +27,18 @@ class _CompetitionPageState extends State<CompetitionPage> {
   }
 
   Future<void> _load() async {
-    final list = await TournamentStore.load(_uid);
+    final cached = await TournamentStore.loadCached(_uid);
+    if (!mounted) return;
+    if (cached.isNotEmpty) {
+      setState(() {
+        _items = cached;
+        _loading = false;
+      });
+    }
+    final fresh = await TournamentStore.load(_uid);
     if (!mounted) return;
     setState(() {
-      _items = list;
+      _items = fresh;
       _loading = false;
     });
   }

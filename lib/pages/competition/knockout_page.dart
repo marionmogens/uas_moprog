@@ -48,27 +48,96 @@ class _KnockoutPageState extends State<KnockoutPage> {
     await TournamentStore.upsert(_uid, t);
   }
 
-  // Akhiri turnamen lalu kembali ke halaman Kompetisi.
+  // Akhiri turnamen -> tampilkan juara dulu -> lalu langsung kembali
+  // ke halaman Kompetisi (tidak tinggal di halaman ini).
   Future<void> _finish() async {
     await _save(_t.copyWith(finished: true));
     if (!mounted) return;
-    showMessage(context, 'Turnamen selesai.');
+    await _showChampionDialog();
+    if (!mounted) return;
     Navigator.pop(context);
+  }
+
+  Future<void> _showChampionDialog() async {
+    final f = _finalMatch;
+    if (f == null) return;
+    final champ = KnockoutLogic.winnerOf(f);
+    if (champ == null || champ.isEmpty) return;
+    final runner = KnockoutLogic.loserOf(f);
+    final th = _thirdMatch;
+    final third = th == null ? null : KnockoutLogic.winnerOf(th);
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🏆', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 8),
+            Text(
+              'Selamat kepada sang juara!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t.teamLabel(champ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.pink.shade400,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _podiumRow('🏆', 'Juara', champ),
+                  _podiumRow('🥈', 'Runner-up', runner),
+                  _podiumRow('🥉', 'Juara 3', third),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Kembali ke Kompetisi'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _editScore(int index) async {
     final m = _t.matches[index];
     if (m.bye) return;
     if (!m.hasTeams) {
-      showMessage(context,
-          'Tim belum lengkap. Selesaikan pertandingan sebelumnya dulu.',
-          isError: true);
+      showMessage(
+        context,
+        'Tim belum lengkap. Selesaikan pertandingan sebelumnya dulu.',
+        isError: true,
+      );
       return;
     }
     if (_t.finished) {
-      showMessage(context,
-          'Turnamen sudah selesai. Buka kembali lewat menu untuk mengubah skor.',
-          isError: true);
+      showMessage(
+        context,
+        'Turnamen sudah selesai. Buka kembali lewat menu untuk mengubah skor.',
+        isError: true,
+      );
       return;
     }
     final result = await showModalBottomSheet<ScoreResult>(
@@ -76,7 +145,8 @@ class _KnockoutPageState extends State<KnockoutPage> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => ScoreSheet(
         teamA: _t.teamLabel(m.teamA),
         teamB: _t.teamLabel(m.teamB),
@@ -103,8 +173,11 @@ class _KnockoutPageState extends State<KnockoutPage> {
     await _save(next);
     if (!mounted) return;
     if (affected) {
-      showMessage(context, 'Hasil babak berikutnya yang terdampak ikut direset.',
-          isError: true);
+      showMessage(
+        context,
+        'Hasil babak berikutnya yang terdampak ikut direset.',
+        isError: true,
+      );
     }
   }
 
@@ -116,10 +189,13 @@ class _KnockoutPageState extends State<KnockoutPage> {
         content: Text(body),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true), child: Text(yes)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(yes),
+          ),
         ],
       ),
     );
@@ -130,17 +206,26 @@ class _KnockoutPageState extends State<KnockoutPage> {
     if (v == 'reopen') {
       await _save(_t.copyWith(finished: false));
     } else if (v == 'reset') {
-      final ok = await _confirm('Reset semua skor?',
-          'Semua hasil dihapus, bagan kembali ke awal.', 'Reset');
+      final ok = await _confirm(
+        'Reset semua skor?',
+        'Semua hasil dihapus, bagan kembali ke awal.',
+        'Reset',
+      );
       if (!ok) return;
-      await _save(_t.copyWith(
-        matches: KnockoutLogic.propagate(
-            [for (final m in _t.matches) m.cleared()]),
-        finished: false,
-      ));
+      await _save(
+        _t.copyWith(
+          matches: KnockoutLogic.propagate(
+            [for (final m in _t.matches) m.cleared()],
+          ),
+          finished: false,
+        ),
+      );
     } else if (v == 'delete') {
-      final ok = await _confirm('Hapus turnamen?',
-          '"${_t.name}" beserta semua hasilnya akan dihapus.', 'Hapus');
+      final ok = await _confirm(
+        'Hapus turnamen?',
+        '"${_t.name}" beserta semua hasilnya akan dihapus.',
+        'Hapus',
+      );
       if (!ok) return;
       await TournamentStore.delete(_uid, _t.id);
       if (!mounted) return;
@@ -151,6 +236,8 @@ class _KnockoutPageState extends State<KnockoutPage> {
   @override
   Widget build(BuildContext context) {
     final rounds = _t.roundCount;
+    final canFinish = _t.allDone && !_t.finished;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -160,8 +247,10 @@ class _KnockoutPageState extends State<KnockoutPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t.name, style: const TextStyle(fontSize: 18)),
-            Text(_t.formatLabel,
-                style: const TextStyle(fontSize: 12, color: Colors.white70)),
+            Text(
+              _t.formatLabel,
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
           ],
         ),
         actions: [
@@ -170,10 +259,14 @@ class _KnockoutPageState extends State<KnockoutPage> {
             itemBuilder: (_) => [
               if (_t.finished)
                 const PopupMenuItem(
-                    value: 'reopen', child: Text('Buka kembali')),
+                  value: 'reopen',
+                  child: Text('Buka kembali'),
+                ),
               const PopupMenuItem(value: 'reset', child: Text('Reset skor')),
               const PopupMenuItem(
-                  value: 'delete', child: Text('Hapus turnamen')),
+                value: 'delete',
+                child: Text('Hapus turnamen'),
+              ),
             ],
           ),
         ],
@@ -187,14 +280,13 @@ class _KnockoutPageState extends State<KnockoutPage> {
           for (var r = 1; r <= rounds; r++) ..._buildRound(r, rounds),
         ],
       ),
-      bottomNavigationBar: (_t.allDone && !_t.finished)
+      bottomNavigationBar: canFinish
           ? SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: PrimaryButton(
             label: 'Akhiri Turnamen',
             onPressed: _finish,
-          ),
           ),
         ),
       )
@@ -208,7 +300,9 @@ class _KnockoutPageState extends State<KnockoutPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -216,8 +310,9 @@ class _KnockoutPageState extends State<KnockoutPage> {
             children: [
               Expanded(
                 child: Text(
-                    '${_t.dateLabel} · Lebih dulu ${_t.targetPoints} poin',
-                    style: TextStyle(color: Colors.grey.shade600)),
+                  '${_t.dateLabel} · Lebih dulu ${_t.targetPoints} poin',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
               ),
               Text(
                 _t.finished ? 'Selesai' : 'Berlangsung',
@@ -231,8 +326,10 @@ class _KnockoutPageState extends State<KnockoutPage> {
             ],
           ),
           const SizedBox(height: 6),
-          Text('${_t.teamCount} tim · ${_t.roundCount} babak',
-              style: const TextStyle(fontSize: 13)),
+          Text(
+            '${_t.teamCount} tim · ${_t.roundCount} babak',
+            style: const TextStyle(fontSize: 13),
+          ),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
@@ -244,8 +341,40 @@ class _KnockoutPageState extends State<KnockoutPage> {
             ),
           ),
           const SizedBox(height: 6),
-          Text('$done dari $total pertandingan selesai',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Text(
+            '$done dari $total pertandingan selesai',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Satu baris di daftar juara (dipakai kartu podium dan dialog juara).
+  Widget _podiumRow(String medal, String title, List<String>? ids) {
+    if (ids == null || ids.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Text(medal, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$title: ',
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                  TextSpan(
+                    text: _t.teamLabel(ids),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -261,40 +390,19 @@ class _KnockoutPageState extends State<KnockoutPage> {
     final th = _thirdMatch;
     final third = th == null ? null : KnockoutLogic.winnerOf(th);
 
-    Widget row(String medal, String title, List<String>? ids) {
-      if (ids == null || ids.isEmpty) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Row(
-          children: [
-            Text(medal, style: const TextStyle(fontSize: 20)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text.rich(TextSpan(children: [
-                TextSpan(
-                    text: '$title: ',
-                    style: TextStyle(color: Colors.grey.shade700)),
-                TextSpan(
-                    text: _t.teamLabel(ids),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ])),
-            ),
-          ],
-        ),
-      );
-    }
-
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: Colors.amber.shade50, borderRadius: BorderRadius.circular(16)),
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          row('🏆', 'Juara', champ),
-          row('🥈', 'Runner-up', runner),
-          row('🥉', 'Juara 3', third),
+          _podiumRow('🏆', 'Juara', champ),
+          _podiumRow('🥈', 'Runner-up', runner),
+          _podiumRow('🥉', 'Juara 3', third),
         ],
       ),
     );
@@ -309,15 +417,19 @@ class _KnockoutPageState extends State<KnockoutPage> {
     return [
       Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 8),
-        child: Text(KnockoutLogic.roundLabel(r, rounds),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Text(
+          KnockoutLogic.roundLabel(r, rounds),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ),
       for (final i in idx) _buildTile(i),
       if (thirdIdx >= 0) ...[
-        Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 8),
-          child: const Text('Perebutan Juara 3',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Padding(
+          padding: EdgeInsets.only(top: 12, bottom: 8),
+          child: Text(
+            'Perebutan Juara 3',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
         _buildTile(thirdIdx),
       ],
@@ -333,16 +445,21 @@ class _KnockoutPageState extends State<KnockoutPage> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(14)),
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Row(
             children: [
               Expanded(
-                child: Text(_t.teamLabel(m.teamA),
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  _t.teamLabel(m.teamA),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
-              Text('BYE · lolos otomatis',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              Text(
+                'BYE · lolos otomatis',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
             ],
           ),
         ),
@@ -370,30 +487,44 @@ class _KnockoutPageState extends State<KnockoutPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(_label(m.teamA), style: teamStyle(m.teamA, aWin)),
+                  child: Text(
+                    _label(m.teamA),
+                    style: teamStyle(m.teamA, aWin),
+                  ),
                 ),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color:
                     m.isDone ? Colors.pink.shade50 : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: m.isDone
-                      ? Text('${m.scoreA} - ${m.scoreB}',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink.shade400))
-                      : Text(m.hasTeams ? 'Isi skor' : 'vs',
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.pink.shade300)),
+                      ? Text(
+                    '${m.scoreA} - ${m.scoreB}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.pink.shade400,
+                    ),
+                  )
+                      : Text(
+                    m.hasTeams ? 'Isi skor' : 'vs',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.pink.shade300,
+                    ),
+                  ),
                 ),
                 Expanded(
-                  child: Text(_label(m.teamB),
-                      textAlign: TextAlign.right,
-                      style: teamStyle(m.teamB, bWin)),
+                  child: Text(
+                    _label(m.teamB),
+                    textAlign: TextAlign.right,
+                    style: teamStyle(m.teamB, bWin),
+                  ),
                 ),
               ],
             ),

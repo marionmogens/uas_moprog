@@ -76,7 +76,7 @@ const List<HelpSection> helpSections = [
     intro: 'Catat skor turnamen padel (Americano, Mexicano, Knockout) dan lihat peringkat berubah langsung.',
     steps: [
       HelpStep('1. Buka Kompetisi',
-          'Ketuk tombol bulat pink di tengah menu bawah. Tamu diminta masuk dulu. Halaman Kompetisi berisi daftar turnamenmu; ketuk Buat Turnamen untuk memulai. Data turnamen tersimpan di HP dan terpisah untuk tiap akun.'),
+          'Ketuk tombol bulat pink di tengah menu bawah. Tamu diminta masuk dulu. Halaman Kompetisi berisi daftar turnamenmu; ketuk Buat Turnamen untuk memulai. Turnamenmu tersimpan di akunmu, jadi bisa dibuka dari perangkat lain.'),
       HelpStep('2. Pilih format',
           'Classic Americano: pasangan berganti tiap ronde dan tiap pemain mengumpulkan poinnya sendiri; jadwal dibuat otomatis agar jumlah main tiap pemain merata. Classic Mexicano: ronde 1 diacak, ronde berikutnya dibentuk dari peringkat terbaru (peringkat 1 + 4 melawan peringkat 2 + 3). Knockout: sistem gugur antar tim yang terdiri dari 2 pemain.'),
       HelpStep('3. Isi nama, pemain, dan pengaturan',

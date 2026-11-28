@@ -64,7 +64,7 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
   }
 
   Future<void> _loadSuggested() async {
-    final all = await TournamentStore.load(_uid);
+    final all = await TournamentStore.loadCached(_uid);
     final names = <String>[];
     for (final t in all) {
       for (final p in t.players) {

@@ -1,154 +1,245 @@
-PadelBook — Aplikasi Reservasi Layanan Padel
-Aplikasi Android berbasis Flutter untuk memesan lapangan dan kelas padel. Proyek ini dibuat sebagai tugas Ujian Tengah Semester (UTS) mata kuliah Mobile Programming dengan fokus pada antarmuka pengguna (UI) dan layout. Seluruh data bersifat statis/dummy, tanpa database maupun API.
-Identitas Kelompok
-	
-Mata kuliah	Mobile Programming
-Topik	Aplikasi Reservasi Layanan
+# PadelBook
 
-Anggota	
-Ellya Edyawati – 825240002
-Teresa Yuardy – 825240031
-Marion Mogens – 825240141
+Aplikasi mobile (Flutter) untuk memesan **lapangan dan kelas padel**, lengkap dengan
+fitur **Kompetisi** untuk menghitung poin turnamen dan melihat leaderboard secara
+real-time. Backend memakai **Supabase** (Auth + PostgREST + Row Level Security).
 
-Deskripsi
-PadelBook memungkinkan pengguna melihat daftar layanan padel (lapangan dan kelas), menyesuaikan pesanan (durasi, tambahan, catatan), memilih jadwal, mengumpulkan beberapa reservasi di keranjang, lalu menyelesaikan pembayaran hingga muncul konfirmasi dengan kode booking.
-Alur Aplikasi
-```
-Beranda → Detail Layanan → Pilih Jadwal → Keranjang → Ringkasan → Pembayaran → Konfirmasi
-```
-Fitur Utama (sesuai ketentuan topik)
-Fitur utama	Wujud di aplikasi
-Keranjang	Menyimpan reservasi yang sudah dipilih jadwalnya, lengkap dengan tambahan dan subtotal
-Pemilihan layanan	Daftar lapangan dan kelas, serta kustomisasi durasi, tambahan, dan catatan
-Reservasi	Pilih tanggal, lapangan, dan jam berdasarkan ketersediaan, atau pilih sesi untuk kelas
-Pembayaran	Pilih metode pembayaran, dialog konfirmasi, lalu halaman konfirmasi transaksi
-Penjelasan Halaman
+> Project UAS Mobile Programming.
 
-1. Beranda (Daftar Layanan)
-AppBar berjudul PadelBook dengan ikon keranjang dan badge jumlah reservasi.
-Teks sapaan, kolom pencarian (nama atau lokasi), dan chip kategori: Lapangan dan Kelas.
-Daftar layanan berbentuk kartu: gambar, status (Tersedia/Penuh), nama, lokasi, rating, dan harga per jam.
-Interaksi kartu: ketuk untuk membuka Detail, ketuk dua kali atau ikon hati untuk menandai favorit, tekan lama untuk preview singkat.
-Bottom navigation: Beranda dan Favorit (menampilkan layanan yang sudah difavoritkan dalam grid 2 kolom).
-2. Detail Layanan
-Gambar besar dengan label status, nama, lokasi, rating, jumlah ulasan, dan indoor/outdoor.
-Deskripsi dan fasilitas (parkir, toilet, AC, dan lain-lain).
-Durasi 1 jam atau 2 jam untuk Lapangan. Untuk Kelas, durasi tetap 2 jam per sesi.
-Tambahan yang bisa dipilih lebih dari satu: Sewa Raket, Sewa Bola, Handuk & Air Mineral 1,5L, dan Coach (khusus Lapangan; pada Kelas, pelatih sudah termasuk). Pada Kelas, raket dan bola untuk 2 orang sudah termasuk.
-Kolom catatan untuk penyedia.
-Total harga berubah langsung mengikuti pilihan durasi dan tambahan.
-Tombol Pilih Jadwal (nonaktif jika layanan sedang penuh).
-3. Pilih Jadwal
-Tanggal dipilih lewat kalender (`showDatePicker`, 30 hari ke depan).
-Lapangan (Lapangan 1, 2, 3) untuk reservasi lapangan.
-Grid slot jam 06:00-22:00 dengan status berbeda warna: tersedia, penuh (dengan label "Penuh"), dipilih, dan di keranjang.
-Jumlah slot yang dipilih harus sama dengan durasi dan berurutan.
-Slot yang sudah ada di keranjang tidak bisa dipesan dua kali.
-Untuk Kelas: pengguna memilih salah satu sesi kelas 2 jam yang tersedia, tanpa memilih lapangan.
-Tombol lanjut hanya aktif jika tanggal dan jadwal sudah lengkap.
-4. Keranjang
-Daftar reservasi: layanan, lapangan/lokasi, tanggal, jam, dan durasi.
-Rincian harga sewa dan subkeranjang tambahan dengan tombol + / - untuk mengubah jumlah.
-Catatan yang bisa diubah, tombol Edit reservasi, dan Tambah jadwal.
-Hapus reservasi dengan dialog konfirmasi.
-Bar checkout berisi total harga dan tombol Checkout.
-Tampilan khusus saat keranjang kosong.
-5. Ringkasan Reservasi
-Rincian semua reservasi (layanan, tanggal, waktu, lapangan, tambahan, catatan) dan total bayar.
-Form data pemesan: nama lengkap dan nomor HP (wajib diisi sebelum lanjut).
-6. Pembayaran
-Total tagihan dan data pemesan.
-Tiga metode pembayaran: Transfer Bank, E-Wallet, dan Bayar di Tempat (kartu dengan border saat terpilih).
-Dialog konfirmasi sebelum membayar. Pembayaran hanya simulasi dan langsung menuju halaman Konfirmasi.
-7. Konfirmasi
-Ikon sukses dan teks "Reservasi Berhasil!".
-Kode booking dummy (format `PDL-xxxxxx`).
-Rincian reservasi, total dibayar, dan metode pembayaran.
-Tombol Kembali ke Beranda. Keranjang sudah dikosongkan saat pembayaran dilakukan.
-Fitur Tambahan
-Elemen tambahan yang relevan dengan topik dan tidak mengubah fokus UI:
-Favorit layanan (ikon hati, ketuk dua kali, dan tab Favorit).
-Pencarian layanan berdasarkan nama atau lokasi.
-Kategori Kelas dengan sesi jadwal tetap.
-Edit reservasi dari Keranjang.
-Pencegahan pemesanan slot yang sama dua kali.
+---
 
-Data Dummy
-6 lapangan dan 2 kelas (`lib/data/dummy_courts.dart`), dua lapangan berstatus penuh.
-Opsi durasi, tambahan, lapangan, slot jam, dan metode pembayaran ada di `lib/data/booking_options.dart`.
-Slot penuh bersifat statis (pukul 08:00, 09:00, 15:00, 19:00, dan 20:00) agar tampilan konsisten.
-Keranjang disimpan di memori lewat `CartStore` (`lib/data/cart_store.dart`) dan hilang saat aplikasi ditutup.
-Gambar diambil dari internet (`Image.network`) dengan ikon cadangan jika gagal dimuat.
-Pemenuhan Ketentuan UTS
-Ketentuan	Keterangan
-Dikembangkan dengan Flutter	Ya, bahasa Dart dengan widget Material
-Kelompok maksimal 3 mahasiswa	Ya
-Satu topik dari daftar	Aplikasi Reservasi Layanan (layanan padel)
-Fokus UI/layout dengan data dummy	Ya, tidak ada database atau API
-Fitur sebagai rancangan tampilan	Pembayaran, kode booking, dan ketersediaan hanya simulasi
-Elemen/halaman tambahan relevan	Favorit, pencarian, kategori Kelas, dan edit reservasi
-Halaman contoh dari soal	Home/Daftar Layanan, Detail, Pilih Jadwal, Ringkasan, dan Konfirmasi/Pembayaran
-Konsep yang Digunakan
-Halaman	Widget dan konsep utama
-Beranda	`AppBar`, `Stack` + `Positioned` (badge), kartu `Container`, `Image.network`, `InkWell`, `Navigator.push`
-Detail	`SingleChildScrollView`, `Stack` (gambar + label), `Container` + `InkWell` (pilihan), `TextField`, `setState`
-Pilih Jadwal	`showDatePicker`, `Row`/`Column` dengan perulangan, status warna slot, `Stack` untuk label "Penuh", tombol dengan kondisi `if`
-Keranjang	Kartu reservasi, stepper +/-, getter `fold`, bar checkout, `AlertDialog` hapus
-Ringkasan	Teks rincian, `TextField` nama dan nomor HP, `ElevatedButton`
-Pembayaran	Kartu `InkWell` dengan border terpilih, `AlertDialog` konfirmasi
-Konfirmasi	`Icon` besar, `Text`, kode booking dummy, `ElevatedButton`
-Catatan Implementasi
-Selain widget dasar di atas, kelompok kami menggunakan beberapa widget dan teknik tambahan agar aplikasi dapat dibuat utuh dan tampil rapi:
-Tambahan	Digunakan untuk
-`GridView.builder`, `LayoutBuilder`	Grid kartu di Beranda dan Favorit
-`ListView.builder`	Daftar reservasi di Keranjang
-`ChoiceChip`, `Wrap`	Chip kategori, fasilitas, tambahan, dan slot jam
-`showModalBottomSheet`, `Dialog`, `GestureDetector`	Preview cepat (tekan lama)
-`SnackBar`	Pesan validasi form pemesan
-`Navigator.pushAndRemoveUntil`, `popUntil`	Membersihkan tumpukan halaman setelah reservasi dan pembayaran
-`Future.delayed`, `async`/`await`	Notifikasi favorit dan menunggu halaman Keranjang/Detail ditutup
-Callback `static` pada `CartStore`	Memperbarui badge keranjang di Beranda
+## Daftar Isi
 
-Struktur Proyek
+- [Fitur](#fitur)
+- [Peran Pengguna](#peran-pengguna)
+- [Fitur Kompetisi](#fitur-kompetisi)
+- [Teknologi](#teknologi)
+- [Struktur Folder](#struktur-folder)
+- [Menjalankan Project](#menjalankan-project)
+- [Setup Supabase](#setup-supabase)
+- [Aturan Bisnis](#aturan-bisnis)
+- [Catatan](#catatan)
+
+---
+
+## Fitur
+
+### Pelanggan
+- Daftar akun dengan **verifikasi email (kode OTP)**, masuk, dan lupa kata sandi.
+- **Mode tamu**: melihat lapangan, kelas, dan ulasan tanpa akun.
+- Cari lapangan/kelas: kategori, kata kunci, dan filter lanjutan
+  (kota, budget per jam, jarak, indoor/outdoor, urutan).
+- **Dekat saya**: urut berdasarkan jarak memakai GPS perangkat.
+- Detail tempat: foto, deskripsi, fasilitas, rating, dan ulasan.
+- **Favorit** (tekan ikon hati atau ketuk dua kali kartu), tersimpan di perangkat.
+- Pilih durasi, add-on (sewa raket, bola, handuk & air, coach), dan jadwal
+  30 hari ke depan.
+- Ringkasan pesanan, pembayaran (simulasi), dan **riwayat pesanan** dengan kode booking.
+- **Batalkan reservasi** (paling lambat H-1, refund 50%) dan **beri ulasan**.
+- **Buku panduan** di dalam aplikasi, bisa diunduh sebagai PDF.
+
+### Pemilik Tempat
+- Ajukan lapangan/kelas dari tab Akun; akun pelanggan otomatis menjadi pemilik
+  setelah pengajuan pertama disetujui admin.
+- Kelola tempat: ubah data, ajukan ulang jika ditolak, sakelar *Menerima pesanan*.
+- Lihat pesanan di tempat miliknya, rating, dan ulasan (bisa menghapus ulasan
+  yang tidak pantas di tempat sendiri).
+- Ringkasan **pendapatan** total dan bersih per tempat.
+
+### Admin
+- Tinjau pengajuan tempat (setujui atau tolak dengan alasan).
+- Kelola semua tempat, pesanan, dan ulasan.
+- Laporan **pendapatan** platform per tempat.
+
+### Kompetisi
+Hitung poin turnamen padel dengan format **Americano**, **Mexicano**, dan
+**Knockout**. Detail lengkap ada di bagian [Fitur Kompetisi](#fitur-kompetisi).
+
+---
+
+## Peran Pengguna
+
+| Peran | Cara mendapatkan | Akses utama |
+|---|---|---|
+| Tamu | Tombol *Masuk sebagai Tamu* | Hanya melihat tempat dan ulasan |
+| Pelanggan | Daftar + verifikasi email | Pesan, favorit, riwayat, ulasan, kompetisi |
+| Pemilik | Pengajuan tempat disetujui admin | Kelola tempat, pesanan, ulasan, pendapatan |
+| Admin | Diatur di tabel `profiles` | Persetujuan, pesanan, ulasan, pendapatan |
+
+Setelah login, `role_router.dart` mengarahkan admin ke `AdminHomePage` dan
+selain itu ke `HomePage`.
+
+---
+
+## Fitur Kompetisi
+
+Dibuka lewat **tombol bulat pink di tengah menu bawah** (tamu diminta masuk dulu).
+Turnamen disimpan di **Supabase** (tabel `tournaments`), jadi ikut akun dan bisa
+dibuka dari perangkat lain. Salinan lokal dipakai sebagai cache, sehingga tetap
+bisa dipakai saat offline dan disinkronkan otomatis begitu terhubung lagi.
+
+### Alur
+1. **Pilih format** → 2. **Beri nama turnamen** → 3. **Isi pemain/tim dan pengaturan**
+   → jadwal dibuat otomatis → isi skor tiap pertandingan.
+
+### Format
+
+| Format | Cara kerja |
+|---|---|
+| **Classic Americano** | Pasangan berganti tiap ronde, tiap pemain mengumpulkan poin sendiri. Jadwal dibuat otomatis supaya jumlah main, pasangan, dan lawan merata. |
+| **Classic Mexicano** | Ronde 1 diacak. Ronde berikutnya dibentuk dari peringkat terbaru (peringkat 1 + 4 melawan 2 + 3 dalam tiap kelompok 4 pemain). Ronde baru muncul setelah semua skor ronde sebelumnya terisi. |
+| **Knockout** | Sistem gugur antar tim tetap (2 pemain per tim). Mendukung undian acak atau berdasarkan urutan input (seed), *bye* untuk jumlah tim non-pangkat-2, dan perebutan juara 3. |
+
+### Aturan skor
+Tim yang **lebih dulu mencapai poin kemenangan** (7, 11, 15, 21, atau 25) menang.
+Di lembar skor, ketuk tim pemenang lalu atur skor tim lawan (0 sampai target − 1).
+Tidak ada seri.
+
+### Pengaturan Americano & Mexicano
+- Minimal 4 pemain (maksimal 24).
+- Jumlah lapangan dan jumlah ronde diketik langsung; ronde disarankan otomatis
+  agar semua pemain main sama banyak, dan aplikasi memberi tahu bila belum rata.
+- Peringkat berdasarkan **total poin** atau **kemenangan**; seri diselesaikan
+  dengan selisih poin lalu nama.
+
+### Leaderboard & statistik
+- Leaderboard (P, W-T-L, selisih poin) dihitung ulang setiap skor disimpan.
+- Tab **Statistik**: grafik performa (poin atau peringkat tiap ronde), rentetan
+  menang, kemenangan terbesar, dan sorotan pemain (rata-rata poin, partner
+  terbaik, lawan tersulit).
+
+### Mengakhiri turnamen
+Setelah semua pertandingan selesai, ketuk **Akhiri Turnamen**. Untuk Knockout,
+dialog juara tampil lebih dulu, lalu aplikasi kembali ke daftar Kompetisi.
+Turnamen bisa dibuka kembali lewat menu titik tiga.
+
+---
+
+## Teknologi
+
+| Bagian | Teknologi |
+|---|---|
+| Framework | Flutter (Dart `^3.13.0`) |
+| Backend | Supabase: Auth, REST (PostgREST), Row Level Security, fungsi SQL |
+| HTTP | `http` (tanpa SDK Supabase, lewat `api_client.dart`) |
+| Penyimpanan lokal | `shared_preferences` (sesi, favorit, cache turnamen) |
+| Lokasi | `geolocator` |
+| PDF | `pdf` + `printing` (buku panduan) |
+
+---
+
+## Struktur Folder
+
 ```
 lib/
 ├── main.dart
-├── data/
-│   ├── booking_options.dart   # durasi, tambahan, lapangan, slot jam, metode bayar
-│   ├── cart_store.dart        # penyimpanan keranjang (dummy, di memori)
-│   └── dummy_courts.dart      # data lapangan dan kelas
-├── models/
-│   ├── cart_item.dart         # CartItem dan CartAddon
-│   └── padel_court.dart       # model layanan
+├── config/
+│   ├── supabase_config.dart       # URL & publishable key Supabase
+│   └── revenue_config.dart        # persentase komisi platform
+├── models/                        # padel_court, booking, review, venue_filter,
+│                                  # tournament, app_user, auth_session, ...
+├── services/
+│   ├── api_client.dart            # pembungkus HTTP + penanganan error
+│   ├── auth_service.dart          # login, daftar, OTP, mode tamu
+│   ├── venue_service.dart         # tempat (lapangan & kelas)
+│   ├── booking_service.dart       # reservasi, pembatalan
+│   ├── review_service.dart        # ulasan
+│   ├── revenue_service.dart       # pendapatan
+│   ├── location_service.dart      # GPS & jarak
+│   ├── favorite_store.dart        # favorit (lokal)
+│   ├── tournament_store.dart      # turnamen (Supabase + cache lokal)
+│   ├── americano_scheduler.dart   # jadwal Americano yang merata
+│   ├── mexicano_scheduler.dart    # pembentukan ronde Mexicano
+│   ├── knockout_logic.dart        # bagan, bye, propagasi pemenang
+│   ├── tournament_stats.dart      # statistik & data grafik
+│   └── help_pdf_service.dart      # ekspor buku panduan
 ├── pages/
-│   ├── home_page.dart
-│   ├── detail_page.dart
-│   ├── schedule_page.dart
-│   ├── cart_page.dart
-│   ├── summary_page.dart
-│   ├── payment_page.dart
-│   └── confirmation_page.dart
-├── utils/
-│   └── formatters.dart        # format rupiah dan tanggal
-└── widgets/
-    ├── court_card.dart
-    ├── custom_bottom_nav.dart
-    ├── facility_chip.dart
-    └── selectable_option.dart
+│   ├── splash_page.dart, role_router.dart, home_page.dart
+│   ├── auth/                      # login, register, verifikasi email, lupa sandi
+│   ├── detail_page, schedule_page, cart_page, summary_page,
+│   │   payment_page, confirmation_page, history_page, booking_detail_page
+│   ├── account_page.dart, help_page.dart
+│   ├── owner/                     # kelola tempat milik sendiri
+│   ├── admin/                     # persetujuan, pesanan, ulasan, pendapatan
+│   └── competition/
+│       ├── competition_page.dart          # daftar turnamen
+│       ├── create_tournament_page.dart    # pilih format → nama → pengaturan
+│       ├── tournament_page.dart           # Americano & Mexicano
+│       └── knockout_page.dart             # bagan Knockout
+├── widgets/                       # custom_bottom_nav (tombol tengah pink),
+│                                  # leaderboard_card, score_sheet,
+│                                  # tournament_stats_view, court_card, ...
+├── data/                          # help_content, booking_options, cart_store
+└── utils/                         # formatters, validators, ui_helpers, guest_gate
 
+supabase/                          # skrip SQL, jalankan berurutan
 ```
-Cara Menjalankan
-Prasyarat: Flutter 3.27 atau lebih baru, Android Studio (atau VS Code), dan emulator Android atau perangkat fisik. Koneksi internet diperlukan agar gambar tampil.
+
+---
+
+## Menjalankan Project
+
+Prasyarat: Flutter SDK yang mendukung Dart `^3.13.0`, emulator atau perangkat,
+dan project Supabase milikmu sendiri.
+
 ```bash
-git clone https://github.com/marionmogens/uts_moprog.git
-cd uts_moprog
 flutter pub get
 flutter run
 ```
 
-Pastikan perangkat Android terpilih (`flutter devices`) sebelum menjalankan.
-Batasan
-Tidak ada backend, database, atau autentikasi.
-Pembayaran, kode booking, dan ketersediaan slot hanya simulasi.
-Data hilang saat aplikasi ditutup.
-Tab Riwayat dan Akun belum dibuat karena tidak diperlukan pada tahap UI.
+Izin lokasi diminta saat fitur *Dekat saya* dipakai. Fitur lain tetap berjalan
+jika izin ditolak.
+
+---
+
+## Setup Supabase
+
+1. Buat project di [supabase.com](https://supabase.com).
+2. Isi URL dan *publishable key* project-mu di `lib/config/supabase_config.dart`.
+3. Atur **Authentication → Email** agar mengirim kode verifikasi (OTP).
+4. Buka **SQL Editor** dan jalankan skrip di folder `supabase/` **berurutan**:
+
+| Urutan | Berkas | Isi |
+|---|---|---|
+| 1 | `01_profiles.sql` | Tabel profil pengguna |
+| 2 | `02_bookings.sql` | Tabel reservasi |
+| 3 | `03_venues.sql` | Tempat, peran admin, aturan persetujuan |
+| 4 | `04_seed_demo.sql` | Data contoh (opsional) |
+| 5 | `05_step1_reviews_admin.sql` | Ulasan dan rating |
+| 6 | `06_step3_location.sql` | Koordinat tempat |
+| 7 | `07_step_payment.sql` | Pembayaran langsung sukses |
+| 8 | `08_step_kelola_lapangan.sql` | Tolak pesanan jika tempat tidak menerima |
+| 9 | `08_fitur2_3_pesanan_dan_aturan_ulasan.sql` | Akses pesanan pemilik/admin, aturan ulasan |
+| 10 | `09_step_guest.sql` | Akses baca untuk mode tamu |
+| 11 | `10_step_batal_h1_refund.sql` | Pembatalan H-1 dengan refund 50% |
+| 12 | `11_step_ulasan_pendapatan.sql` | Hapus ulasan oleh pemilik, fungsi pendapatan |
+| 13 | `12_step_tournaments.sql` | Tabel turnamen (Kompetisi) + RLS |
+
+5. Jadikan seorang pengguna admin dengan mengubah kolom `role` di tabel `profiles`
+   menjadi `admin`.
+
+> Dua berkas berawalan `08_` dibuat terpisah; jalankan keduanya. Skrip dibuat
+> idempoten (`if not exists` / `drop ... if exists`), jadi aman bila terulang.
+
+---
+
+## Aturan Bisnis
+
+- **Komisi**: 20% untuk platform, 80% untuk pemilik tempat
+  (ubah di `lib/config/revenue_config.dart`).
+- **Durasi**: lapangan 1 atau 2 jam; kelas berupa sesi 2 jam.
+- **Pembayaran**: simulasi (Transfer Bank / E-Wallet), langsung berhasil.
+- **Pembatalan**: paling lambat H-1 sebelum jadwal, refund 50%; dicek di server
+  lewat fungsi `cancel_booking`.
+- **Ulasan**: hanya untuk pengguna yang pernah punya reservasi (tidak dibatalkan)
+  di tempat tersebut; satu ulasan per pengguna per tempat.
+
+---
+
+## Catatan
+
+- Pembayaran tidak memproses uang sungguhan.
+- Data Kompetisi tersimpan di Supabase dan di cache lokal. Perubahan yang dibuat
+  saat offline dikirim otomatis saat aplikasi terhubung lagi. Jika turnamen yang
+  sama diubah di dua perangkat sekaligus, versi yang terakhir terkirim yang
+  dipakai.
