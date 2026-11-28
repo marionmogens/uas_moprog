@@ -48,6 +48,14 @@ class _KnockoutPageState extends State<KnockoutPage> {
     await TournamentStore.upsert(_uid, t);
   }
 
+  // Akhiri turnamen lalu kembali ke halaman Kompetisi.
+  Future<void> _finish() async {
+    await _save(_t.copyWith(finished: true));
+    if (!mounted) return;
+    showMessage(context, 'Turnamen selesai.');
+    Navigator.pop(context);
+  }
+
   Future<void> _editScore(int index) async {
     final m = _t.matches[index];
     if (m.bye) return;
@@ -185,7 +193,8 @@ class _KnockoutPageState extends State<KnockoutPage> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: PrimaryButton(
             label: 'Akhiri Turnamen',
-            onPressed: () => _save(_t.copyWith(finished: true)),
+            onPressed: _finish,
+          ),
           ),
         ),
       )

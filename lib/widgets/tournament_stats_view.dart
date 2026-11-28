@@ -296,22 +296,32 @@ class _TournamentStatsViewState extends State<TournamentStatsView> {
     final sp = TournamentStats.spotlight(_t, id);
     final s = sp.standing;
 
-    Widget cell(String value, String label) => Container(
-      padding: const EdgeInsets.all(14),
+    // Satu baris penuh per sorotan: label di kiri, nilai di kanan.
+    // Nilai yang panjang (mis. nama partner) turun ke baris berikutnya,
+    // jadi tidak pernah overflow.
+    Widget row(String label, String value) => Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
           border: Border.all(color: Colors.grey.shade200),
           borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Expanded(
+            flex: 4,
+            child: Text(label,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 6,
+            child: Text(value,
+                textAlign: TextAlign.end,
+                style:
+                const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
@@ -331,7 +341,8 @@ class _TournamentStatsViewState extends State<TournamentStatsView> {
                 for (var i = 0; i < ranking.length; i++)
                   DropdownMenuItem(
                     value: ranking[i].player.id,
-                    child: Text('${ranking[i].player.name}   #${i + 1}'),
+                    child: Text('${ranking[i].player.name}   #${i + 1}',
+                        overflow: TextOverflow.ellipsis),
                   ),
               ],
               onChanged: (v) {
@@ -340,22 +351,12 @@ class _TournamentStatsViewState extends State<TournamentStatsView> {
             ),
           ),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.3,
-            children: [
-              cell('${s.wins}-${s.ties}-${s.losses}', 'W-T-L'),
-              cell(diff > 0 ? '+$diff' : '$diff', 'Selisih poin'),
-              cell(sp.avgScored.toStringAsFixed(1), 'Rata-rata poin'),
-              cell('${s.points}', 'Total poin'),
-              cell(sp.bestPartner ?? '-', 'Partner terbaik'),
-              cell(sp.toughestOpponent ?? '-', 'Lawan tersulit'),
-            ],
-          ),
+          row('W-T-L', '${s.wins}-${s.ties}-${s.losses}'),
+          row('Selisih poin', diff > 0 ? '+$diff' : '$diff'),
+          row('Rata-rata poin', sp.avgScored.toStringAsFixed(1)),
+          row('Total poin', '${s.points}'),
+          row('Partner terbaik', sp.bestPartner ?? '-'),
+          row('Lawan tersulit', sp.toughestOpponent ?? '-'),
         ],
       ),
     );

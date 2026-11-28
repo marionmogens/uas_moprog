@@ -5,7 +5,7 @@ class HelpStep {
 }
 
 class HelpSection {
-  final String id; // 'pelanggan' | 'pemilik'
+  final String id; // 'pelanggan' | 'pemilik' | 'kompetisi'
   final String title;
   final String intro;
   final List<HelpStep> steps;
@@ -23,7 +23,7 @@ class FaqItem {
   const FaqItem(this.question, this.answer);
 }
 
-// Buku panduan hanya untuk Pelanggan dan Pemilik Tempat.
+// Buku panduan untuk Pelanggan, Pemilik Tempat, dan fitur Kompetisi.
 // Admin tidak memiliki buku panduan.
 const List<HelpSection> helpSections = [
   HelpSection(
@@ -48,7 +48,7 @@ const List<HelpSection> helpSections = [
       HelpStep('8. Bayar',
           'Pilih metode pembayaran (Transfer Bank atau E-Wallet), lalu ketuk Bayar Sekarang. Pembayaran di aplikasi ini adalah simulasi dan langsung berhasil.'),
       HelpStep('9. Cek riwayat dan beri ulasan',
-          'Semua pesanan ada di tab Riwayat lengkap dengan kode booking. Ketuk satu pesanan untuk melihat detailnya. Pesanan yang sudah dibayar tidak bisa dibatalkan. Setelah bermain, ketuk Beri Ulasan untuk memberi bintang dan komentar.'),
+          'Semua pesanan ada di tab Riwayat lengkap dengan kode booking. Ketuk satu pesanan untuk melihat detailnya. Pesanan yang sudah dibayar tidak bisa dibatalkan. Setelah bermain, ketuk Beri Ulasan untuk memberi bintang dan komentar. Mau mencatat skor permainan bersama teman? Pakai tombol Kompetisi di tengah menu bawah (lihat panduan Fitur Kompetisi).'),
     ],
   ),
   HelpSection(
@@ -68,6 +68,31 @@ const List<HelpSection> helpSections = [
           'Di detail tempatmu, ketuk ikon tempat sampah pada ulasan yang tidak pantas, lalu konfirmasi. Rating tempat dihitung ulang otomatis. Kamu hanya bisa menghapus ulasan di lapangan atau kelas milikmu sendiri.'),
       HelpStep('6. Lihat pendapatan',
           'Di bagian atas Kelola Lapangan tampil Total Pendapatan dari pesanan yang sudah dibayar, beserta Pendapatan Bersih 80% milikmu setelah komisi PadelBook 20%. Pendapatan tiap tempat juga tampil di kartunya masing-masing.'),
+    ],
+  ),
+  HelpSection(
+    id: 'kompetisi',
+    title: 'Fitur Kompetisi: hitung poin & leaderboard',
+    intro: 'Catat skor turnamen padel (Americano, Mexicano, Knockout) dan lihat peringkat berubah langsung.',
+    steps: [
+      HelpStep('1. Buka Kompetisi',
+          'Ketuk tombol bulat pink di tengah menu bawah. Tamu diminta masuk dulu. Halaman Kompetisi berisi daftar turnamenmu; ketuk Buat Turnamen untuk memulai. Data turnamen tersimpan di HP dan terpisah untuk tiap akun.'),
+      HelpStep('2. Pilih format',
+          'Classic Americano: pasangan berganti tiap ronde dan tiap pemain mengumpulkan poinnya sendiri; jadwal dibuat otomatis agar jumlah main tiap pemain merata. Classic Mexicano: ronde 1 diacak, ronde berikutnya dibentuk dari peringkat terbaru (peringkat 1 + 4 melawan peringkat 2 + 3). Knockout: sistem gugur antar tim yang terdiri dari 2 pemain.'),
+      HelpStep('3. Isi nama, pemain, dan pengaturan',
+          'Beri nama turnamen, lalu tambahkan minimal 4 pemain (Americano dan Mexicano) atau minimal 2 tim berisi 2 pemain (Knockout). Pilih poin kemenangan (tim yang lebih dulu mencapai angka itu menang), jumlah lapangan, jumlah ronde, dan urutan peringkat berdasarkan total poin atau kemenangan. Aplikasi memberi tahu apakah semua pemain main sama banyak; kalau belum, ubah jumlah ronde.'),
+      HelpStep('4. Masukkan skor',
+          'Ketuk satu pertandingan. Di lembar skor, ketuk di mana saja pada kotak tim yang lebih dulu mencapai poin kemenangan, lalu atur skor tim lawan dengan tombol - dan +, kemudian ketuk Simpan Skor. Salah input? Ketuk pertandingannya lagi untuk mengubah, atau pilih Hapus skor.'),
+      HelpStep('5. Leaderboard real-time',
+          'Setiap skor disimpan, leaderboard langsung diperbarui: menang, seri, kalah, poin, dan selisih poin. Urutan memakai total poin atau kemenangan (sesuai pengaturanmu), lalu selisih poin.'),
+      HelpStep('6. Ronde Mexicano berikutnya',
+          'Begitu semua skor dalam satu ronde terisi, ronde berikutnya dibuat otomatis dari peringkat terbaru, dan kamu tinggal lanjut mengisi skor. Kalau belum muncul (misalnya pada turnamen lama), ketuk tombol Buat Ronde di bagian bawah halaman.'),
+      HelpStep('7. Knockout',
+          'Pemenang tiap pertandingan otomatis naik ke babak berikutnya di bagan. Tim yang tidak mendapat lawan lolos otomatis (bye). Kamu bisa mengacak undian dan menambah perebutan juara 3 saat membuat turnamen. Mengubah hasil yang memengaruhi babak berikutnya akan mereset hasil di babak tersebut.'),
+      HelpStep('8. Lihat statistik',
+          'Buka tab Statistik untuk grafik performa (poin atau peringkat tiap ronde; ketuk nama pemain untuk menyembunyikan atau menampilkan garisnya), rentetan menang, kemenangan terbesar, dan sorotan tiap pemain: W-T-L, selisih poin, rata-rata poin, partner terbaik, dan lawan tersulit.'),
+      HelpStep('9. Akhiri turnamen',
+          'Setelah semua pertandingan selesai, ketuk Akhiri Turnamen. Kamu langsung kembali ke daftar Kompetisi dan juaranya tampil. Ingin mengubah skor lagi? Buka turnamennya, lalu menu titik tiga > Buka kembali. Menu itu juga berisi Reset skor dan Hapus turnamen.'),
     ],
   ),
 ];
@@ -105,4 +130,16 @@ const List<FaqItem> faqItems = [
       'Pengguna yang pernah memiliki reservasi (tidak dibatalkan) di tempat tersebut. Satu pengguna satu ulasan per tempat dan bisa diubah dengan memberi ulasan lagi.'),
   FaqItem('Bagaimana mengubah nama atau nomor HP?',
       'Buka tab Akun, ubah di bagian Ubah Profil, lalu ketuk Simpan Perubahan.'),
+  FaqItem('Apa beda Americano, Mexicano, dan Knockout?',
+      'Americano: pasangan berganti tiap ronde menurut jadwal yang dibuat otomatis. Mexicano: ronde 1 diacak, ronde berikutnya dibentuk dari peringkat terbaru sehingga lawan selalu seimbang. Knockout: sistem gugur, yang kalah tersingkir dan pemenang naik ke babak berikutnya.'),
+  FaqItem('Kenapa jumlah main tiap pemain tidak sama?',
+      'Itu terjadi bila jumlah ronde tidak pas dengan jumlah pemain dan lapangan. Aplikasi menampilkan berapa kali tiap pemain main; ubah jumlah ronde sampai tertulis semua pemain main tepat sama banyak.'),
+  FaqItem('Ronde Mexicano berikutnya tidak muncul, bagaimana?',
+      'Ronde berikutnya muncul otomatis setelah semua skor ronde saat ini terisi. Pastikan tidak ada pertandingan yang masih berstatus Isi skor. Jika semuanya sudah terisi tetapi belum muncul, ketuk tombol Buat Ronde di bagian bawah halaman.'),
+  FaqItem('Bagaimana cara memilih pemenang di lembar skor?',
+      'Ketuk di mana saja pada kotak tim yang menang, tidak perlu mengetuk ikonnya. Lalu atur skor tim lawan dengan tombol - dan +, dan ketuk Simpan Skor.'),
+  FaqItem('Apakah data kompetisi tersimpan di server?',
+      'Tidak. Turnamen disimpan di HP dan terpisah untuk tiap akun. Jika kamu menghapus data aplikasi atau berpindah HP, turnamen tidak ikut terbawa.'),
+  FaqItem('Bisakah tamu memakai fitur Kompetisi?',
+      'Tidak. Ketuk tombol Kompetisi sebagai tamu akan mengarahkan ke halaman Masuk atau Daftar terlebih dahulu.'),
 ];

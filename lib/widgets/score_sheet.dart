@@ -88,13 +88,17 @@ class _ScoreSheetState extends State<ScoreSheet> {
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
           const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _teamCard(0)),
-              const SizedBox(width: 12),
-              Expanded(child: _teamCard(1)),
-            ],
+          // IntrinsicHeight: kedua kotak tim sama tinggi, jadi sama-sama
+          // mudah diketuk di bagian mana pun.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _teamCard(0)),
+                const SizedBox(width: 12),
+                Expanded(child: _teamCard(1)),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           PrimaryButton(
@@ -112,28 +116,32 @@ class _ScoreSheetState extends State<ScoreSheet> {
     );
   }
 
+  // Seluruh kotak tim (kiri maupun kanan) bisa diketuk untuk memilih pemenang.
+  // Tombol - / + milik tim kalah tetap bekerja sendiri (tidak mengganti pemenang).
   Widget _teamCard(int side) {
     final name = side == 0 ? widget.teamA : widget.teamB;
     final isWinner = _winner == side;
     final isLoser = _winner != null && !isWinner;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isWinner ? Colors.pink.shade50 : Colors.grey.shade50,
+    return Material(
+      color: isWinner ? Colors.pink.shade50 : Colors.grey.shade50,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => setState(() => _winner = side),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isWinner ? Colors.pink.shade300 : Colors.grey.shade300,
-          width: isWinner ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => setState(() => _winner = side),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isWinner ? Colors.pink.shade300 : Colors.grey.shade300,
+              width: isWinner ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
                 children: [
                   Text(name,
                       textAlign: TextAlign.center,
@@ -167,36 +175,34 @@ class _ScoreSheetState extends State<ScoreSheet> {
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 10),
+              isWinner
+                  ? Text('${widget.target}',
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.pink.shade400))
+                  : isLoser
+                  ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _RoundBtn(
+                      icon: Icons.remove,
+                      onTap: () => _setLoser(_loser - 1)),
+                  Text('$_loser',
+                      style: const TextStyle(
+                          fontSize: 32, fontWeight: FontWeight.bold)),
+                  _RoundBtn(
+                      icon: Icons.add,
+                      onTap: () => _setLoser(_loser + 1)),
+                ],
+              )
+                  : Text('-',
+                  style: TextStyle(
+                      fontSize: 32, color: Colors.grey.shade400)),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 14),
-            child: isWinner
-                ? Text('${widget.target}',
-                style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.pink.shade400))
-                : isLoser
-                ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _RoundBtn(
-                    icon: Icons.remove,
-                    onTap: () => _setLoser(_loser - 1)),
-                Text('$_loser',
-                    style: const TextStyle(
-                        fontSize: 32, fontWeight: FontWeight.bold)),
-                _RoundBtn(
-                    icon: Icons.add,
-                    onTap: () => _setLoser(_loser + 1)),
-              ],
-            )
-                : Text('-',
-                style: TextStyle(
-                    fontSize: 32, color: Colors.grey.shade400)),
-          ),
-        ],
+        ),
       ),
     );
   }

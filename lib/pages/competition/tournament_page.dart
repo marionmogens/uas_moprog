@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/tournament.dart';
 import '../../services/auth_service.dart';
+import '../../services/mexicano_scheduler.dart';
 import '../../services/tournament_store.dart';
 import '../../utils/ui_helpers.dart';
 import '../../widgets/leaderboard_card.dart';
@@ -34,6 +35,36 @@ class _TournamentPageState extends State<TournamentPage> {
     await TournamentStore.upsert(_uid, t);
   }
 
+  bool get _isMexicano => _t.format == TournamentFormat.mexicano;
+
+  // Mexicano: bentuk ronde berikutnya dari peringkat terbaru, lalu tambahkan
+  // ke daftar pertandingan.
+  Tournament _withNextRound(Tournament t) {
+    final next = MexicanoScheduler.nextRound(t);
+    if (next.isEmpty) return t;
+    return t.copyWith(matches: [...t.matches, ...next]);
+  }
+
+  Future<void> _generateNextRound() async {
+    final n = _t.generatedRounds + 1;
+    await _save(_withNextRound(_t));
+    if (!mounted) return;
+    showMessage(context, 'Ronde $n dibuat dari peringkat terbaru.');
+  }
+
+  // Akhiri turnamen lalu kembali ke halaman Kompetisi.
+  Future<void> _finish() async {
+    final st = _t.standings();
+    await _save(_t.copyWith(finished: true));
+    if (!mounted) return;
+    showMessage(
+        context,
+        st.isEmpty
+            ? 'Turnamen selesai.'
+            : 'Turnamen selesai. Juara: ${st.first.player.name}');
+    Navigator.pop(context);
+  }
+
   Future<void> _editScore(int index) async {
     if (_t.finished) {
       showMessage(context,
@@ -63,7 +94,19 @@ class _TournamentPageState extends State<TournamentPage> {
     matches[index] = result.clear
         ? m.cleared()
         : m.withScore(result.scoreA!, result.scoreB!);
-    await _save(_t.copyWith(matches: matches));
+    var updated = _t.copyWith(matches: matches);
+
+    // Mexicano: begitu semua skor di ronde ini terisi, ronde berikutnya
+    // langsung dibuat berdasarkan peringkat terbaru.
+    final autoNext = _isMexicano && updated.needsNextRound;
+    final roundNo = updated.generatedRounds + 1;
+    if (autoNext) updated = _withNextRound(updated);
+
+    await _save(updated);
+    if (!mounted) return;
+    if (autoNext) {
+      showMessage(context, 'Ronde $roundNo dibuat dari peringkat terbaru.');
+    }
   }
 
   Future<bool> _confirm(String title, String body, String yes) async {
@@ -88,11 +131,21 @@ class _TournamentPageState extends State<TournamentPage> {
     if (v == 'reopen') {
       await _save(_t.copyWith(finished: false));
     } else if (v == 'reset') {
-      final ok = await _confirm('Reset semua skor?',
-          'Semua skor akan dihapus, jadwal tetap.', 'Reset');
+      final ok = await _confirm(
+          'Reset semua skor?',
+          _isMexicano
+              ? 'Semua skor dihapus dan kembali ke ronde 1. Ronde berikutnya '
+              'dibuat ulang dari peringkat.'
+              : 'Semua skor akan dihapus, jadwal tetap.',
+          'Reset');
       if (!ok) return;
       await _save(_t.copyWith(
-          matches: [for (final m in _t.matches) m.cleared()], finished: false));
+        // Mexicano: ronde 2 dst. dibentuk dari peringkat, jadi ikut dibuang.
+          matches: [
+            for (final m in _t.matches)
+              if (!_isMexicano || m.round == 1) m.cleared(),
+          ],
+          finished: false));
     } else if (v == 'delete') {
       final ok = await _confirm('Hapus turnamen?',
           '"${_t.name}" beserta semua skornya akan dihapus.', 'Hapus');
@@ -106,7 +159,7 @@ class _TournamentPageState extends State<TournamentPage> {
   @override
   Widget build(BuildContext context) {
     final st = _t.standings();
-    final rounds = _t.roundCount;
+    final rounds = _t.generatedRounds; // ronde yang sudah dibuat
 
     return DefaultTabController(
       length: 2,
@@ -160,29 +213,72 @@ class _TournamentPageState extends State<TournamentPage> {
                 const SizedBox(height: 8),
                 const _SectionTitle('Pertandingan'),
                 for (var r = 1; r <= rounds; r++) ..._buildRound(r),
+                if (_isMexicano && !_t.finished && _t.generatedRounds < _t.totalRounds)
+                  _buildNextRoundHint(),
               ],
             ),
             // ----- Tab 2: Statistik + grafik -----
             TournamentStatsView(tournament: _t),
           ],
         ),
-        bottomNavigationBar: (_t.allDone && !_t.finished)
-            ? SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: PrimaryButton(
-              label: 'Akhiri Turnamen',
-              onPressed: () => _save(_t.copyWith(finished: true)),
+        bottomNavigationBar: _buildBottomAction(),
+      ),
+    );
+  }
+
+  // Tombol di bawah: lanjut ke ronde berikutnya (Mexicano) atau akhiri turnamen.
+  Widget? _buildBottomAction() {
+    if (_t.finished) return null;
+
+    String? label;
+    VoidCallback? onTap;
+    if (_isMexicano && _t.needsNextRound) {
+      // Cadangan: ronde sebelumnya sudah selesai tetapi ronde berikutnya belum
+      // terbentuk (mis. data lama atau skor direset).
+      label = 'Buat Ronde ${_t.generatedRounds + 1}';
+      onTap = _generateNextRound;
+    } else if (_t.allDone) {
+      label = 'Akhiri Turnamen';
+      onTap = _finish;
+    }
+    if (label == null) return null;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: PrimaryButton(label: label, onPressed: onTap),
+      ),
+    );
+  }
+
+  Widget _buildNextRoundHint() {
+    final next = _t.generatedRounds + 1;
+    return Container(
+      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.pink.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.pink.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.autorenew, color: Colors.pink.shade300),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Ronde $next dari ${_t.totalRounds} dibuat otomatis dari '
+                  'peringkat terbaru begitu semua skor ronde ini terisi.',
+              style: const TextStyle(fontSize: 12.5),
             ),
           ),
-        )
-            : null,
+        ],
       ),
     );
   }
 
   Widget _buildSummary(List<Standing> st) {
-    final total = _t.matches.length;
+    final total = _t.matchCount; // Mexicano: termasuk ronde yang belum dibuat
     final done = _t.doneCount;
     return Container(
       padding: const EdgeInsets.all(16),
